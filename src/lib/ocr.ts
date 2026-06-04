@@ -23,10 +23,11 @@ async function imageToOCR(
   });
 
   try {
-    // PSM 6 = single uniform block of text — best for table-like marksheets
-    await worker.setParameters({ tessedit_pageseg_mode: '6' as never });
+    // PSM 3 = fully automatic page segmentation — handles multi-column tables better
+    await worker.setParameters({ tessedit_pageseg_mode: '3' as never });
     const result = await worker.recognize(imageData);
     const confidences: number[] = result.data.words?.map((w) => w.confidence) ?? [];
+    console.log('[OCR raw text]\n', result.data.text); // debug — shows in browser console
     return { text: result.data.text, confidences };
   } finally {
     await worker.terminate();

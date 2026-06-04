@@ -250,6 +250,7 @@ export default function AIScanner() {
               rows={editableRows}
               accuracy={accuracy}
               liveGPA={liveGPA}
+              rawText={allResults[0]?.rawText ?? ''}
               registerNumber={allResults[0]?.registerNumber}
               semesterNumber={allResults[0]?.semesterNumber}
               onUpdate={updateRow}
@@ -361,10 +362,11 @@ function ProcessingOverlay({ progress, status, file }: {
   );
 }
 
-function ReviewScreen({ rows, accuracy, liveGPA, registerNumber, semesterNumber, onUpdate, onDelete, onAdd, onCalculate, onReset }: {
+function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semesterNumber, onUpdate, onDelete, onAdd, onCalculate, onReset }: {
   rows: ExtractedRow[];
   accuracy: number;
   liveGPA: number;
+  rawText: string;
   registerNumber?: string;
   semesterNumber?: number;
   onUpdate: (id: string, field: keyof ExtractedRow, val: unknown) => void;
@@ -373,6 +375,7 @@ function ReviewScreen({ rows, accuracy, liveGPA, registerNumber, semesterNumber,
   onCalculate: () => void;
   onReset: () => void;
 }) {
+  const [showRaw, setShowRaw] = useState(false);
   const validCount = rows.filter((r) => r.isValid).length;
   const isEmpty = rows.length === 0;
 
@@ -495,6 +498,25 @@ function ReviewScreen({ rows, accuracy, liveGPA, registerNumber, semesterNumber,
             </table>
           </div>
         </Glass>
+      )}
+
+      {/* Raw OCR text — collapsible debug panel */}
+      {rawText && (
+        <div>
+          <button
+            onClick={() => setShowRaw(v => !v)}
+            className="text-xs text-slate-600 hover:text-slate-400 transition-colors cursor-pointer flex items-center gap-1"
+          >
+            {showRaw ? '▾' : '▸'} Raw OCR text (debug)
+          </button>
+          {showRaw && (
+            <Glass className="mt-2 p-3 max-h-48 overflow-y-auto">
+              <pre className="text-[10px] text-slate-500 whitespace-pre-wrap font-mono leading-relaxed">
+                {rawText}
+              </pre>
+            </Glass>
+          )}
+        </div>
       )}
 
       {/* Actions */}
