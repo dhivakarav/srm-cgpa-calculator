@@ -29,16 +29,17 @@ function detectRegisterNumber(text: string): string | undefined {
   return m?.[0]?.toUpperCase();
 }
 
-const GRADE_PAT = '(O|A\\+|A|B\\+|B|C|U)';
+// ─── Three pattern strategies, searched globally across the full OCR text ─────
 
-// Pattern 1 — SRM Provisional Result format: [credit 0-6] [GRADE] [PASS|FAIL]
-const PAT_PASS_FAIL = new RegExp(`\\b([0-6])\\s+${GRADE_PAT}\\s+(PASS|FAIL|P|F)\\b`, 'i');
+// Strategy 1 — SRM Provisional Result: [credit 0-6] [GRADE] [PASS|FAIL]
+// Highest confidence — PASS/FAIL is a strong structural anchor
+const PAT_PASS_FAIL = /(^|[\s\n])([0-6])\s+(O|A\+|A|B\+|B|C|U)\s+(PASS|FAIL|P(?=\s)|F(?=\s))/gi;
 
-// Pattern 2 — SRM internal marksheet format: [credit 1-6] [GRADE] [grade_point 0/5-10]
-const PAT_WITH_GP = new RegExp(`\\b([1-6])\\s+${GRADE_PAT}\\s+(10|[05-9])\\b`);
+// Strategy 2 — Internal marksheet: [credit 1-6] [GRADE] [grade_point 0/5-10]
+const PAT_WITH_GP = /(^|[\s\n])([1-6])\s+(O|A\+|A|B\+|B|C|U)\s+(10|[05-9])(?=\s|$)/g;
 
-// Pattern 3 — bare fallback: [credit 1-6] [GRADE] at end of line or before spaces
-const PAT_BARE = new RegExp(`\\b([1-6])\\s+${GRADE_PAT}(?:\\s|$)`);
+// Strategy 3 — Bare: [credit 1-6] [GRADE] at end of a token group
+const PAT_BARE = /(^|[\s\n])([1-6])\s+(O|A\+|A|B\+|B|C|U)(?=\s|$)/g;
 
 export function parseOCRText(rawText: string, wordConfidences: number[]): ExtractionResult {
   const semesterNumber = detectSemester(rawText);
@@ -50,76 +51,61 @@ export function parseOCRText(rawText: string, wordConfidences: number[]): Extrac
     ? wordConfidences.reduce((a, b) => a + b, 0) / wordConfidences.length
     : 65;
 
-  const rows: ExtractedRow[] = [];
-  let subjectIndex = 1;
+  // Normalize OCR noise before scanning
+  const text = rawText
+    .replace(/\bA\s+\+/g, 'A+')
+    .replace(/\bB\s+\+/g, 'B+');
 
-  const lines = rawText
-    .split('\n')
-    .map((l) =>
-      l
-        .replace(/\bA\s+\+/g, 'A+')   // fix OCR space: "A +" → "A+"
-        .replace(/\bB\s+\+/g, 'B+')
-        .replace(/[|_]+/g, ' ')
-        .replace(/\s{2,}/g, ' ')
-        .trim()
-    )
-    .filter(Boolean);
+  let matches: Array<{ credits: number; grade: GradeKey; confidence: number }> = [];
 
-  const SKIP_RE = /^(code|description|credit|grade|result|sl|s\.no|course|subject|sgpa|cgpa|register|name|marks|pass|fail|disclaimer|last\s+updated|exam\s+month|semester\s*:|provisional)/i;
-
-  for (const line of lines) {
-    if (SKIP_RE.test(line)) continue;
-    if (/^[-=*_#\s]+$/.test(line)) continue;
-    if (line.length < 3) continue;
-
-    let credits: number | null = null;
-    let grade: GradeKey | '' = '';
-    let confidence = Math.round(avgConf);
-
-    // Try each pattern in priority order
-    const m1 = line.match(PAT_PASS_FAIL);
-    if (m1) {
-      credits = parseInt(m1[1], 10);
-      grade = normalizeGrade(m1[2]);
-      confidence = Math.min(100, Math.round(avgConf + 20)); // high confidence — pass/fail confirms it
-    } else {
-      const m2 = line.match(PAT_WITH_GP);
-      if (m2) {
-        credits = parseInt(m2[1], 10);
-        grade = normalizeGrade(m2[2]);
-        const gp = parseInt(m2[3], 10);
-        const expectedGP = grade ? (GRADE_POINTS as Record<string, number>)[grade] : -1;
-        confidence = Math.min(100, Math.round(avgConf + (expectedGP === gp ? 15 : 5)));
-      } else {
-        const m3 = line.match(PAT_BARE);
-        if (m3) {
-          credits = parseInt(m3[1], 10);
-          grade = normalizeGrade(m3[2]);
-          confidence = Math.min(100, Math.round(avgConf - 5));
-        }
-      }
-    }
-
-    if (credits === null || !grade) continue;
-
-    // Skip 0-credit courses (non-credit audit courses — don't affect GPA)
-    if (credits === 0) continue;
-
-    rows.push({
-      id: nanoid(),
-      subjectCode: '',
-      subjectName: `Subject ${subjectIndex++}`,
-      credits,
-      grade,
-      confidence,
-      isValid: true,
-      validationError: undefined,
-    });
+  // Try Strategy 1 first — most reliable for SRM provisional result screenshots
+  const s1: typeof matches = [];
+  for (const m of text.matchAll(PAT_PASS_FAIL)) {
+    const credits = parseInt(m[2], 10);
+    const grade = normalizeGrade(m[3]);
+    if (!grade || credits === 0) continue; // skip 0-credit audit courses
+    s1.push({ credits, grade, confidence: Math.min(100, Math.round(avgConf + 20)) });
   }
 
-  const accuracyPercent = rows.length > 0
-    ? Math.round(avgConf * 10) / 10
-    : 0;
+  if (s1.length > 0) {
+    matches = s1;
+  } else {
+    // Strategy 2 — internal marksheet with grade points
+    const s2: typeof matches = [];
+    for (const m of text.matchAll(PAT_WITH_GP)) {
+      const credits = parseInt(m[2], 10);
+      const grade = normalizeGrade(m[3]);
+      const gp = parseInt(m[4], 10);
+      if (!grade) continue;
+      const expectedGP = grade ? (GRADE_POINTS as Record<string, number>)[grade] : -1;
+      s2.push({ credits, grade, confidence: Math.min(100, Math.round(avgConf + (expectedGP === gp ? 15 : 5))) });
+    }
+
+    if (s2.length > 0) {
+      matches = s2;
+    } else {
+      // Strategy 3 — bare fallback
+      for (const m of text.matchAll(PAT_BARE)) {
+        const credits = parseInt(m[2], 10);
+        const grade = normalizeGrade(m[3]);
+        if (!grade) continue;
+        matches.push({ credits, grade, confidence: Math.min(100, Math.round(avgConf - 5)) });
+      }
+    }
+  }
+
+  const rows: ExtractedRow[] = matches.map((m, i) => ({
+    id: nanoid(),
+    subjectCode: '',
+    subjectName: `Subject ${i + 1}`,
+    credits: m.credits,
+    grade: m.grade,
+    confidence: m.confidence,
+    isValid: true,
+    validationError: undefined,
+  }));
+
+  const accuracyPercent = rows.length > 0 ? Math.round(avgConf * 10) / 10 : 0;
 
   return { rows, semesterNumber, registerNumber, rawSemesterGPA, accuracyPercent, rawText };
 }
