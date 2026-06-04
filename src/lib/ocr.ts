@@ -1,29 +1,36 @@
-import Tesseract from 'tesseract.js';
+import { createWorker } from 'tesseract.js';
 import type { ExtractionResult } from '../types';
 import { parseOCRText } from './parse';
 
 export type OCRProgressCallback = (progress: number, status: string) => void;
 
 async function imageToOCR(
-  imageData: string | ImageData,
+  imageData: string,
   onProgress: OCRProgressCallback
 ): Promise<{ text: string; confidences: number[] }> {
-  const result = await Tesseract.recognize(imageData, 'eng', {
+  onProgress(5, '⚙️ Loading OCR engine...');
+
+  const worker = await createWorker('eng', 1, {
     logger: (m) => {
       if (m.status === 'recognizing text') {
-        onProgress(Math.round(m.progress * 80), 'Reading text...');
-      } else if (m.status === 'loading tesseract core') {
-        onProgress(5, 'Loading OCR engine...');
-      } else if (m.status === 'initializing tesseract') {
-        onProgress(10, 'Initializing...');
+        onProgress(20 + Math.round(m.progress * 60), '🔍 Reading text...');
       } else if (m.status === 'loading language traineddata') {
-        onProgress(15, 'Loading language data...');
+        onProgress(10, '📦 Loading language data...');
+      } else if (m.status === 'initializing api') {
+        onProgress(15, '🔧 Initializing...');
       }
     },
   });
 
-  const confidences: number[] = result.data.words?.map((w) => w.confidence) ?? [];
-  return { text: result.data.text, confidences };
+  try {
+    // PSM 6 = single uniform block of text — best for table-like marksheets
+    await worker.setParameters({ tessedit_pageseg_mode: '6' as never });
+    const result = await worker.recognize(imageData);
+    const confidences: number[] = result.data.words?.map((w) => w.confidence) ?? [];
+    return { text: result.data.text, confidences };
+  } finally {
+    await worker.terminate();
+  }
 }
 
 export async function runOCROnImage(
@@ -37,7 +44,7 @@ export async function runOCROnImage(
     onProgress(85, '📚 Extracting grades...');
     const result = parseOCRText(text, confidences);
     onProgress(95, '🧠 Calculating GPA...');
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 200));
     onProgress(100, '✨ Done!');
     return result;
   } finally {
@@ -60,38 +67,33 @@ export async function runOCROnPDF(
   const arrayBuffer = await file.arrayBuffer();
   const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const numPages = pdfDoc.numPages;
-
   const results: ExtractionResult[] = [];
 
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-    onProgress(
-      Math.round(((pageNum - 1) / numPages) * 70),
-      `🔍 Scanning page ${pageNum} of ${numPages}...`
-    );
+    const pageBase = Math.round(((pageNum - 1) / numPages) * 80);
+    onProgress(pageBase, `🔍 Scanning page ${pageNum} of ${numPages}...`);
 
     const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: 2.0 }); // hi-res for better OCR
+    const viewport = page.getViewport({ scale: 2.5 }); // hi-res
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
     canvas.width = viewport.width;
     canvas.height = viewport.height;
-
     await page.render({ canvasContext: ctx, viewport }).promise;
 
     const imageDataUrl = canvas.toDataURL('image/png');
     const { text, confidences } = await imageToOCR(
       imageDataUrl,
-      (p, s) => onProgress(Math.round(((pageNum - 1 + p / 100) / numPages) * 70), s)
+      (p, s) => onProgress(pageBase + Math.round((p / 100) * (80 / numPages)), s)
     );
 
     onProgress(Math.round((pageNum / numPages) * 80), `📚 Parsing page ${pageNum}...`);
     const result = parseOCRText(text, confidences);
-    if (result.rows.length > 0) results.push(result);
+    results.push(result); // push even if 0 rows — caller decides
   }
 
-  onProgress(90, '🧠 Merging results...');
-  await new Promise((r) => setTimeout(r, 300));
+  onProgress(95, '🧠 Merging results...');
+  await new Promise((r) => setTimeout(r, 200));
   onProgress(100, '✨ All pages processed!');
-
   return results;
 }

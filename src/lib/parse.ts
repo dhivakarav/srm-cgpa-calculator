@@ -3,147 +3,226 @@ import { nanoid } from 'nanoid';
 
 const VALID_GRADES = new Set<string>(['O', 'A+', 'A', 'B+', 'B', 'C', 'U']);
 
-// OCR noise correction: map common misreads to valid grades
+// Map common OCR misreads → valid grade
+const GRADE_OCR_MAP: Record<string, GradeKey> = {
+  // O misreads
+  '0': 'O', 'o': 'O', 'O0': 'O', 'OO': 'O', '()': 'O',
+  // A+ misreads
+  'At': 'A+', 'A-': 'A+', 'a+': 'A+', 'A1': 'A+', 'A+1': 'A+',
+  'At+': 'A+', 'A¥': 'A+', 'A%': 'A+',
+  // B+ misreads
+  'Bt': 'B+', 'B-': 'B+', 'b+': 'B+', 'B1': 'B+', 'B+1': 'B+',
+  // lowercase variants
+  'a': 'A', 'b': 'B', 'c': 'C', 'u': 'U',
+};
+
 function normalizeGrade(raw: string): GradeKey | '' {
-  const s = raw.trim().toUpperCase().replace(/\s+/g, '');
+  const s = raw.trim().replace(/\s+/g, '');
   if (VALID_GRADES.has(s)) return s as GradeKey;
-  // Common OCR substitutions
-  const map: Record<string, GradeKey> = {
-    '0': 'O', 'O0': 'O', '00': 'O',
-    'A1': 'A+', 'A+1': 'A+', 'At': 'A+',
-    'B1': 'B+', 'B+1': 'B+', 'Bt': 'B+',
-    'A': 'A', 'B': 'B', 'C': 'C', 'U': 'U',
-  };
-  return map[s] ?? '';
+  const upper = s.toUpperCase();
+  if (VALID_GRADES.has(upper)) return upper as GradeKey;
+  return (GRADE_OCR_MAP[s] ?? GRADE_OCR_MAP[upper]) ?? '';
 }
 
 function normalizeCredits(raw: string): number | '' {
-  const n = parseFloat(raw.replace(/[^\d.]/g, ''));
+  const cleaned = raw.replace(/[^\d]/g, '');
+  const n = parseInt(cleaned, 10);
   if (isNaN(n) || n < 1 || n > 6) return '';
-  return Math.round(n);
+  return n;
 }
 
-// Detect semester number from text
 function detectSemester(text: string): number | undefined {
-  const m = text.match(/semester[\s:\-]*(\d+)|sem[\s:\-]*(\d+)|(\d+)(st|nd|rd|th)\s*semester/i);
-  if (m) return parseInt(m[1] || m[2] || m[3]);
-  return undefined;
+  const m = text.match(/(?:semester|sem)[\s:.\-]*([1-8])|([1-8])(?:st|nd|rd|th)\s*sem/i);
+  return m ? parseInt(m[1] ?? m[2]) : undefined;
 }
 
-// Detect register number
 function detectRegisterNumber(text: string): string | undefined {
-  const m = text.match(/\b(RA\d{13}|\d{15}|[A-Z]{2}\d{2}[A-Z]{2}\d{4})\b/i);
+  const m = text.match(/\b(RA\d{13}|\d{15}|[A-Z]{2}\d{2}[A-Z]{2}\d{4,6})\b/i);
   return m?.[0]?.toUpperCase();
 }
 
-// Extract rows from raw OCR text
-export function parseOCRText(rawText: string, wordConfidences: number[]): ExtractionResult {
-  const lines = rawText.split('\n').map((l) => l.trim()).filter(Boolean);
-  const rows: ExtractedRow[] = [];
+// Is this token a subject code? (e.g. 21CSC101J, 18MAT201T, BCSE101)
+function isSubjectCode(s: string): boolean {
+  return /^[A-Z0-9]{2,4}\d{3,5}[A-Z]?$/.test(s.toUpperCase());
+}
 
+// Is this token a grade point (0,5,6,7,8,9,10)?
+function isGradePoint(s: string): boolean {
+  return /^(10|[056789])$/.test(s);
+}
+
+// Is this token a credit value (1-6)?
+function isCredit(s: string): boolean {
+  return /^[1-6]$/.test(s);
+}
+
+// Header / noise line patterns to skip
+const SKIP_LINE_RE = /^(sl\.?\s*no|s\.no|course\s*code|subject|credits?|grade|total|result|sgpa|cgpa|semester|register|name|regno|marks|attendance|out of|earned|status|pass|fail|absent)/i;
+
+/**
+ * Main entry point. Parses raw OCR text into structured grade rows.
+ * Handles SRM marksheet format with tolerance for OCR noise.
+ */
+export function parseOCRText(rawText: string, wordConfidences: number[]): ExtractionResult {
   const semesterNumber = detectSemester(rawText);
   const registerNumber = detectRegisterNumber(rawText);
 
-  // Try to detect printed GPA line (e.g. "GPA : 8.45" or "SGPA: 8.45")
-  let rawSemesterGPA: number | undefined;
-  const gpaMatch = rawText.match(/(?:sgpa|gpa|grade\s+point\s+average)\s*[:\-=]?\s*([0-9]+\.[0-9]+)/i);
-  if (gpaMatch) rawSemesterGPA = parseFloat(gpaMatch[1]);
+  const gpaMatch = rawText.match(/(?:sgpa|gpa|grade\s*point\s*avg?)\s*[:\-=]?\s*([0-9]+\.[0-9]+)/i);
+  const rawSemesterGPA = gpaMatch ? parseFloat(gpaMatch[1]) : undefined;
 
-  // Row patterns to try (subject code | subject name | credits | grade)
-  // SRM marksheet rows usually follow: CODE  SUBJECT_NAME  CREDITS  GRADE  GP  ...
-  const SUBJECT_CODE_RE = /^[A-Z]{2,4}\d{3,5}[A-Z]?$/;
+  const avgConfidence = wordConfidences.length
+    ? wordConfidences.reduce((a, b) => a + b, 0) / wordConfidences.length
+    : 60;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const parts = line.split(/\s{2,}|\t/).map((p) => p.trim()).filter(Boolean);
+  const rows: ExtractedRow[] = [];
+  const lines = rawText.split('\n').map((l) => l.trim()).filter(Boolean);
 
-    if (parts.length < 2) continue;
+  for (const line of lines) {
+    if (SKIP_LINE_RE.test(line)) continue;
+    if (/^[-=*_|#\s]+$/.test(line)) continue;
+    if (line.length < 5) continue;
 
-    // Skip obvious header / footer noise
-    if (/^(subject|code|name|credit|grade|total|result|sgpa|cgpa|semester|register|sl\.?\s*no|s\.no)/i.test(line)) continue;
-    if (/^[\-=*#_]+$/.test(line)) continue;
+    // Tokenize: split on whitespace
+    const tokens = line.split(/\s+/).filter(Boolean);
+    if (tokens.length < 2) continue;
 
-    // Try to find a subject code pattern somewhere in the row
-    const codeIdx = parts.findIndex((p) => SUBJECT_CODE_RE.test(p));
-
-    let subjectCode = '';
-    let subjectName = '';
-    let creditsRaw = '';
-    let gradeRaw = '';
+    // Strategy 1: find subject code in tokens
+    const codeIdx = tokens.findIndex((t) => isSubjectCode(t));
 
     if (codeIdx >= 0) {
-      subjectCode = parts[codeIdx];
-      // Subject name is usually right after code (or in the next col)
-      subjectName = parts.slice(codeIdx + 1, -2).join(' ').replace(/\d+$/, '').trim();
-      // Last two meaningful tokens: credits and grade
-      const tail = parts.slice(codeIdx + 1);
-      // Find credits (1–6)
-      for (let t = tail.length - 1; t >= 0; t--) {
-        if (/^\d(\.\d)?$/.test(tail[t])) {
-          creditsRaw = tail[t];
-          // Grade should be right before credits or right after — try both
-          const possibleGrades = [tail[t - 1], tail[t + 1]].filter(Boolean);
-          for (const pg of possibleGrades) {
-            const g = normalizeGrade(pg);
-            if (g) { gradeRaw = pg; break; }
-          }
-          if (!gradeRaw) {
-            // Try scanning tail for grade
-            for (const token of tail) {
-              const g = normalizeGrade(token);
-              if (g) { gradeRaw = token; break; }
-            }
-          }
-          break;
-        }
-      }
-    } else {
-      // Try looser: last token is grade, second-last is credits
-      gradeRaw = parts[parts.length - 1];
-      creditsRaw = parts[parts.length - 2] ?? '';
-      subjectName = parts.slice(0, -2).join(' ');
+      const row = extractRowWithCode(tokens, codeIdx, avgConfidence);
+      if (row) { rows.push(row); continue; }
     }
 
-    const grade = normalizeGrade(gradeRaw);
-    const credits = normalizeCredits(creditsRaw);
-
-    if (!grade && credits === '') continue; // totally unresolvable line
-
-    const isValid = !!grade && credits !== '';
-    let validationError: string | undefined;
-    if (!grade) validationError = 'Could not detect grade';
-    else if (credits === '') validationError = 'Could not detect credits';
-
-    // Confidence: average of Tesseract word confidences in this region + pattern matching bonus
-    const lineConfidence = wordConfidences.length
-      ? wordConfidences.reduce((a, b) => a + b, 0) / wordConfidences.length
-      : 50;
-    const patternBonus = codeIdx >= 0 ? 15 : 0;
-    const confidence = Math.min(100, Math.round(lineConfidence + patternBonus));
-
-    rows.push({
-      id: nanoid(),
-      subjectCode,
-      subjectName: subjectName || `Subject ${rows.length + 1}`,
-      credits,
-      grade,
-      confidence,
-      isValid,
-      validationError,
-    });
+    // Strategy 2: scan for a grade token and nearby credit
+    const row = extractRowByGrade(tokens, line, avgConfidence);
+    if (row) rows.push(row);
   }
 
-  // Overall accuracy: fraction of valid rows weighted by confidence
-  const validRows = rows.filter((r) => r.isValid);
-  const accuracyPercent =
-    rows.length === 0
-      ? 0
-      : Math.round(
-          (validRows.reduce((sum, r) => sum + r.confidence, 0) /
-            (rows.length * 100)) *
-            100 *
-            10
-        ) / 10;
+  // Deduplicate by subject code
+  const seen = new Set<string>();
+  const deduped = rows.filter((r) => {
+    if (!r.subjectCode) return true;
+    if (seen.has(r.subjectCode)) return false;
+    seen.add(r.subjectCode);
+    return true;
+  });
 
-  return { rows, semesterNumber, registerNumber, rawSemesterGPA, accuracyPercent, rawText };
+  const validRows = deduped.filter((r) => r.isValid);
+  const accuracyPercent =
+    deduped.length === 0
+      ? 0
+      : Math.round((validRows.length / deduped.length) * avgConfidence * 10) / 10;
+
+  return { rows: deduped, semesterNumber, registerNumber, rawSemesterGPA, accuracyPercent, rawText };
+}
+
+function extractRowWithCode(
+  tokens: string[],
+  codeIdx: number,
+  baseConfidence: number
+): ExtractedRow | null {
+  const subjectCode = tokens[codeIdx].toUpperCase();
+
+  // Look for a grade token AFTER the subject code
+  let gradeIdx = -1;
+  let grade: GradeKey = '';
+  for (let i = codeIdx + 1; i < tokens.length; i++) {
+    const g = normalizeGrade(tokens[i]);
+    if (g) {
+      grade = g;
+      gradeIdx = i;
+      break;
+    }
+  }
+
+  // Credits: integer 1-6 that appears between code and grade (or right before grade)
+  let credits: number | '' = '';
+  const searchEnd = gradeIdx >= 0 ? gradeIdx : tokens.length;
+  for (let i = codeIdx + 1; i < searchEnd; i++) {
+    if (isCredit(tokens[i]) && !isGradePoint(tokens[i - 1] ?? '')) {
+      credits = parseInt(tokens[i], 10);
+      break;
+    }
+  }
+  // If no credit found before grade, check if token right before grade is a credit
+  if (credits === '' && gradeIdx > codeIdx + 1) {
+    const candidate = tokens[gradeIdx - 1];
+    if (isCredit(candidate)) credits = parseInt(candidate, 10);
+  }
+
+  // Subject name: tokens between code and first number (credit)
+  const nameParts: string[] = [];
+  for (let i = codeIdx + 1; i < tokens.length; i++) {
+    if (/^\d+$/.test(tokens[i])) break;
+    nameParts.push(tokens[i]);
+  }
+  const subjectName = nameParts.join(' ').trim() || subjectCode;
+
+  const isValid = !!grade && credits !== '';
+  const validationError = !grade
+    ? 'Grade not detected'
+    : credits === ''
+    ? 'Credits not detected'
+    : undefined;
+
+  // Confidence: base OCR confidence + bonus for having subject code
+  const confidence = Math.min(100, Math.round(baseConfidence + 10));
+
+  return {
+    id: nanoid(),
+    subjectCode,
+    subjectName,
+    credits,
+    grade,
+    confidence,
+    isValid,
+    validationError,
+  };
+}
+
+function extractRowByGrade(
+  tokens: string[],
+  line: string,
+  baseConfidence: number
+): ExtractedRow | null {
+  // Find all grade tokens in the line
+  for (let i = 0; i < tokens.length; i++) {
+    const grade = normalizeGrade(tokens[i]);
+    if (!grade) continue;
+
+    // Skip if this token is inside a word like "GRADE" header — already filtered above
+    // Look for credit: integer 1-6 before the grade token
+    let credits: number | '' = '';
+    for (let j = Math.max(0, i - 3); j < i; j++) {
+      if (isCredit(tokens[j])) {
+        credits = parseInt(tokens[j], 10);
+        break;
+      }
+    }
+
+    // Subject name: tokens before the credit (or before grade if no credit)
+    const creditPos = credits !== ''
+      ? tokens.findIndex((t, idx) => idx < i && isCredit(t))
+      : i;
+    const nameParts = tokens.slice(0, creditPos).filter((t) => !/^\d+$/.test(t));
+    const subjectName = nameParts.join(' ').trim();
+
+    if (!subjectName && credits === '') continue; // nothing useful
+
+    const isValid = !!grade && credits !== '';
+
+    return {
+      id: nanoid(),
+      subjectCode: '',
+      subjectName: subjectName || `Subject`,
+      credits,
+      grade,
+      confidence: Math.min(100, Math.round(baseConfidence - 5)),
+      isValid,
+      validationError: credits === '' ? 'Credits not detected' : undefined,
+    };
+  }
+
+  return null;
 }
