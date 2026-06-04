@@ -30,13 +30,13 @@ type Hit = {
 function preprocessText(raw: string): string {
   return (
     raw
-      // Uppercase everything
       .toUpperCase()
-      // Fix split grades that OCR breaks with a space
       .replace(/\bA\s+\+/g, 'A+')
       .replace(/\bB\s+\+/g, 'B+')
-      // Strip pipe/underscore chars
-      .replace(/[|_]/g, ' ')
+      // Tabs and pipes → space
+      .replace(/[\t|_]/g, ' ')
+      // Collapse multiple spaces on a line (but keep newlines)
+      .replace(/[^\S\n]+/g, ' ')
   );
 }
 
@@ -127,40 +127,45 @@ export function parseOCRText(rawText: string, wordConfidences: number[]): Extrac
     }
   }
 
-  // ── Pass 1b: cross-line — credit at end of line N, grade on line N+1/N+2 ──
-  // Handles OCR splits like: "ENGINEERING GRAPHICS AND 2\nDESIGN O"
+  // ── Pass 1b: cross-line — credit at end of a DESCRIPTION line, grade on next ─
+  // Handles: "ENGINEERING GRAPHICS AND 2\nDESIGN O"
+  // NOT for bare credit-only lines (those belong to a credits-column block → Pass 4).
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line || SKIP_HEADER_RE.test(line)) continue;
 
-    // Line must end with a bare single-digit credit (1-6)
-    const creditEnd = line.match(/(?:^|\s)([1-6])\s*$/);
-    if (!creditEnd) continue;
-
-    // Line must have no grade token (Pass 1 already handles same-line pairs)
     const lineTokens = line.split(/\s+/).filter(Boolean);
+
+    // Must end with a single-digit credit
+    const lastTok = lineTokens[lineTokens.length - 1] ?? '';
+    if (!/^[1-6]$/.test(lastTok)) continue;
+
+    // Must have NO grade on the same line (Pass 1 handles same-line pairs)
     if (lineTokens.some((t) => tokenToGrade(t) !== null)) continue;
 
-    const credits = parseInt(creditEnd[1], 10);
+    // ONLY fire when the line contains description text (> 1 token).
+    // A bare credit-only line (e.g. just "4") belongs to a credits-column block
+    // and is handled by Pass 4 — don't try to pair it here.
+    if (lineTokens.length < 2) continue;
 
-    // Search up to 2 lines ahead for a grade
-    for (let j = i + 1; j <= Math.min(i + 2, lines.length - 1); j++) {
+    const credits = parseInt(lastTok, 10);
+
+    for (let j = i + 1; j <= Math.min(i + 4, lines.length - 1); j++) {
       const nextLine = lines[j].trim();
       if (!nextLine) continue;
+
+      // If the next line is also a bare credit digit, we entered a credits-column block
+      if (/^[1-6]$/.test(nextLine)) break;
 
       const nextTokens = nextLine.split(/\s+/).filter(Boolean);
       let foundGrade = false;
       for (let k = 0; k < nextTokens.length; k++) {
         const grade = tokenToGrade(nextTokens[k]);
         if (!grade) continue;
-
-        // Skip if the token immediately before grade on the SAME next-line is a credit —
-        // that means Pass 1 already handles it from the next line itself
         if (k > 0 && /^[1-6]$/.test(nextTokens[k - 1])) continue;
-
-        const srcKey = `${line} / ${nextLine}`;
-        hits.push({ credits, grade, confidence: 65, sourceLine: srcKey });
-        console.log(`[Parse] Matched (split-line): credit=${credits} grade=${grade} across: '${srcKey}'`);
+        // Use the credit's own line as key so Pass 2 (PASS/FAIL) can dedup correctly
+        hits.push({ credits, grade, confidence: 65, sourceLine: line });
+        console.log(`[Parse] Matched (split-line): credit=${credits} grade=${grade} across: '${line}' → '${nextLine}'`);
         foundGrade = true;
         break;
       }
@@ -206,6 +211,41 @@ export function parseOCRText(rawText: string, wordConfidences: number[]): Extrac
       sourceLine,
     });
     console.log(`[Parse] Matched (GP): credit=${credits} grade=${grade} gp=${gp} on line: '${sourceLine}'`);
+  }
+
+  // ── Pass 4: column-order pairing ────────────────────────────────────────────
+  // Detects column-by-column OCR output (credits block + grades block separate).
+  // Heuristic: 3+ consecutive bare credit-digit lines → column layout detected.
+  // In that case, ignore any Pass-1b hits and re-pair all credits with all grades.
+  const hasCreditsBlock = lines.some(
+    (_, i) =>
+      i + 2 < lines.length &&
+      /^[1-6]$/.test(lines[i].trim()) &&
+      /^[1-6]$/.test(lines[i + 1].trim()) &&
+      /^[1-6]$/.test(lines[i + 2].trim())
+  );
+  if (hits.length === 0 || hasCreditsBlock) {
+    if (hasCreditsBlock) hits.length = 0; // discard wrong Pass-1b pairings
+    const allCredits: number[] = [];
+    const allGrades: GradeKey[] = [];
+    for (const tok of text.split(/\s+/)) {
+      if (/^[1-6]$/.test(tok)) allCredits.push(parseInt(tok, 10));
+      const g = tokenToGrade(tok);
+      if (g) allGrades.push(g);
+    }
+    const pairCount = Math.min(allCredits.length, allGrades.length);
+    if (pairCount > 0 && pairCount <= 20) {
+      console.log(`[Parse] Pass 4 (column pairing): ${allCredits.length} credits, ${allGrades.length} grades → ${pairCount} pairs`);
+      for (let pi = 0; pi < pairCount; pi++) {
+        hits.push({
+          credits: allCredits[pi],
+          grade: allGrades[pi],
+          confidence: 50,
+          sourceLine: `col-pair-${pi}`,
+        });
+        console.log(`[Parse] Matched (col-pair): credit=${allCredits[pi]} grade=${allGrades[pi]}`);
+      }
+    }
   }
 
   // ── Deduplicate & pick highest confidence per (credits, grade, sourceLine) ─

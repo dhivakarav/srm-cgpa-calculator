@@ -41,20 +41,18 @@ async function preprocessImage(imageSource: string): Promise<string> {
         const g = data[i + 1];
         const b = data[i + 2];
 
-        // Luminance grayscale
+        // Convert to grayscale (luminance)
         const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
 
-        // Contrast stretch: amplify deviation from 128 by factor 1.4
-        const stretched = Math.round(128 + (gray - 128) * 1.4);
-        const clamped = Math.max(0, Math.min(255, stretched));
+        // Contrast stretch only — NO hard binarization.
+        // Binarization at a fixed threshold destroys text on colored backgrounds
+        // (teal/blue table headers). Let Tesseract use its own adaptive threshold.
+        const stretched = Math.round(128 + (gray - 128) * 1.5);
+        const out = Math.max(0, Math.min(255, stretched));
 
-        // Hard threshold at 150 → black (0) or white (255)
-        const binary = clamped < 150 ? 0 : 255;
-
-        data[i] = binary;
-        data[i + 1] = binary;
-        data[i + 2] = binary;
-        // alpha unchanged
+        data[i] = out;
+        data[i + 1] = out;
+        data[i + 2] = out;
       }
 
       ctx.putImageData(imageData, 0, 0);
@@ -121,7 +119,7 @@ async function imageToOCR(
     processedDataUrl = imageSource;
   }
 
-  const psmSequence = [6, 4, 3]; // uniform block → single column → fully auto
+  const psmSequence = [6, 4, 3, 11]; // uniform block → single column → auto → sparse text
   let bestText = '';
   let bestConf: number[] = [];
   let bestRowCount = -1;
