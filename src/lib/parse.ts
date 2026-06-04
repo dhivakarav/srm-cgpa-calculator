@@ -127,34 +127,44 @@ export function parseOCRText(rawText: string, wordConfidences: number[]): Extrac
     }
   }
 
-  // ── Pass 1b: cross-line — credit at end of a DESCRIPTION line, grade on next ─
-  // Handles: "ENGINEERING GRAPHICS AND 2\nDESIGN O"
-  // NOT for bare credit-only lines (those belong to a credits-column block → Pass 4).
+  // ── Pass 1b: cross-line — credit on one line, grade on a following line ──────
+  // Handles two sub-cases:
+  //   A) Description line ending with credit: "ENGINEERING GRAPHICS AND 2\nDESIGN O"
+  //   B) Bare credit line preceded by description (not a credit block):
+  //      e.g. "ADVANCED CALCULUS AND COMPLEX ANALYSIS\n4\nB"
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line || SKIP_HEADER_RE.test(line)) continue;
 
     const lineTokens = line.split(/\s+/).filter(Boolean);
-
-    // Must end with a single-digit credit
     const lastTok = lineTokens[lineTokens.length - 1] ?? '';
+
+    // Line must end with a bare credit digit
     if (!/^[1-6]$/.test(lastTok)) continue;
 
-    // Must have NO grade on the same line (Pass 1 handles same-line pairs)
+    // Line must have no grade (Pass 1 already handles same-line pairs)
     if (lineTokens.some((t) => tokenToGrade(t) !== null)) continue;
 
-    // ONLY fire when the line contains description text (> 1 token).
-    // A bare credit-only line (e.g. just "4") belongs to a credits-column block
-    // and is handled by Pass 4 — don't try to pair it here.
-    if (lineTokens.length < 2) continue;
+    // For bare credit-only lines (single token), check whether we are inside a
+    // credits-column block by looking at the previous non-empty line.
+    // If the previous non-empty line is also a bare credit digit → block → skip.
+    if (lineTokens.length === 1) {
+      let prevNonEmpty = '';
+      for (let pi = i - 1; pi >= 0; pi--) {
+        const pl = lines[pi].trim();
+        if (pl) { prevNonEmpty = pl; break; }
+      }
+      if (/^[1-6]$/.test(prevNonEmpty)) continue; // inside credit-column block → Pass 4
+    }
 
     const credits = parseInt(lastTok, 10);
+    // Description lines look ahead up to 4; bare-credit lines up to 2
+    const maxAhead = lineTokens.length >= 2 ? 4 : 2;
 
-    for (let j = i + 1; j <= Math.min(i + 4, lines.length - 1); j++) {
+    for (let j = i + 1; j <= Math.min(i + maxAhead, lines.length - 1); j++) {
       const nextLine = lines[j].trim();
       if (!nextLine) continue;
-
-      // If the next line is also a bare credit digit, we entered a credits-column block
+      // Stop if we hit another bare credit line (entered credit block territory)
       if (/^[1-6]$/.test(nextLine)) break;
 
       const nextTokens = nextLine.split(/\s+/).filter(Boolean);
@@ -163,7 +173,6 @@ export function parseOCRText(rawText: string, wordConfidences: number[]): Extrac
         const grade = tokenToGrade(nextTokens[k]);
         if (!grade) continue;
         if (k > 0 && /^[1-6]$/.test(nextTokens[k - 1])) continue;
-        // Use the credit's own line as key so Pass 2 (PASS/FAIL) can dedup correctly
         hits.push({ credits, grade, confidence: 65, sourceLine: line });
         console.log(`[Parse] Matched (split-line): credit=${credits} grade=${grade} across: '${line}' → '${nextLine}'`);
         foundGrade = true;
