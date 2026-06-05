@@ -50,7 +50,10 @@ function buildResult(
   hits: Hit[],
   meta: { semesterNumber?: number; registerNumber?: string; rawSemesterGPA?: number; rawText: string; avgConf: number }
 ): ExtractionResult {
-  const rows: ExtractedRow[] = hits.map((h, i) => ({
+  // 0-credit courses (audit / non-credit) don't count toward GPA — drop them entirely.
+  const rows: ExtractedRow[] = hits
+    .filter((h) => h.credits > 0)
+    .map((h, i) => ({
     id: nanoid(),
     subjectCode: '',
     subjectName: `Subject ${i + 1}`,
