@@ -10,13 +10,36 @@ function normalizeGrade(raw: string): GradeKey | '' {
   const s = raw.trim().replace(/\s+/g, '').toUpperCase();
   if (VALID_GRADES.has(s)) return s as GradeKey;
   const map: Record<string, GradeKey> = {
-    '0': 'O', 'Q': 'O', 'O0': 'O', 'D': 'O',
+    // grade O — Tesseract frequently reads the single glyph as Oo / OO / 0 / Q / D
+    '0': 'O', 'Q': 'O', 'O0': 'O', '0O': 'O', 'OO': 'O', 'D': 'O', 'CO': 'O',
     'AT': 'A+', 'A-': 'A+', 'A1': 'A+', 'A+1': 'A+',
     'BT': 'B+', 'B-': 'B+', 'B1': 'B+', 'B+1': 'B+',
     // single-char misreads
     'L': 'C', 'E': 'C',
   };
   return map[s] ?? '';
+}
+
+// A token that could be the grade "O" OR the credit digit "0" — resolved by column.
+function isZeroLike(raw: string): boolean {
+  return /^(0|O+|Q|D|CO)$/i.test(raw.trim().replace(/\s+/g, ''));
+}
+
+// The round "O" glyph is frequently mangled by OCR into bracketed/letter noise
+// such as "[e]", "[o]", "[6]", "(c)". Used ONLY for the grade column, where the
+// only round-glyph grade is O — so any such token is treated as grade O.
+function looksLikeGradeO(raw: string): boolean {
+  const s = raw.trim().toUpperCase().replace(/\s+/g, '');
+  if (isZeroLike(s)) return true;
+  return /^[[({]?[EOQCDG06]{1,2}[\])}]?$/.test(s);
+}
+
+// Numeric credit value of a credit-column token (0-6), or NaN if not a credit.
+function creditValue(raw: string): number {
+  const t = raw.trim();
+  if (/^[1-6]$/.test(t)) return parseInt(t);
+  if (isZeroLike(t)) return 0;
+  return NaN;
 }
 
 // ─── Metadata ─────────────────────────────────────────────────────────────────
@@ -88,14 +111,42 @@ function parseByLayout(words: TWord[]): Hit[] {
   // Use very low confidence threshold — marksheet text is usually clear,
   // but Tesseract sometimes assigns low confidence to short single chars (O, B, A)
   const CONF_THRESHOLD = 10;
+  const cx = (w: TWord) => (w.bbox.x0 + w.bbox.x1) / 2;
 
-  const creditWords = combined.filter(
-    (w) => /^[1-6]$/.test(w.text.trim()) && w.confidence >= CONF_THRESHOLD
-  );
-  const gradeWords = combined.filter((w) => {
-    const g = normalizeGrade(w.text);
-    return g !== '' && w.confidence >= CONF_THRESHOLD;
-  });
+  const conf = combined.filter((w) => w.confidence >= CONF_THRESHOLD);
+
+  // Unambiguous tokens — used to locate the two column X-centres.
+  const digitWords = conf.filter((w) => /^[1-6]$/.test(w.text.trim())); // credit column
+  const letterGrades = conf.filter((w) => /^(A\+|B\+|A|B|C|U)$/.test(w.text.trim().toUpperCase()));
+  const zeroWords = conf.filter((w) => isZeroLike(w.text));
+
+  const median = (xs: number[]) =>
+    xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] : NaN;
+  const creditColX = median(digitWords.map(cx));
+  const gradeColX = median(letterGrades.map(cx));
+
+  // ── Column-aware mode ─────────────────────────────────────────────────────
+  // When both columns are found with a clear horizontal gap, classify each
+  // ambiguous "0/O" token by which column it sits in. This separates the credit
+  // digit 0 from the grade letter O — the single biggest source of OCR errors.
+  let creditWords: TWord[] = digitWords;
+  let gradeWords: TWord[] = conf.filter((w) => normalizeGrade(w.text) !== '');
+
+  const columnsResolved =
+    Number.isFinite(creditColX) && Number.isFinite(gradeColX) && creditColX < gradeColX;
+
+  if (columnsResolved) {
+    const inCreditCol = (w: TWord) => Math.abs(cx(w) - creditColX) <= Math.abs(cx(w) - gradeColX);
+    // Credit column: real digits 1-6 plus any 0-like token sitting in the credit column.
+    const creditZeros = zeroWords.filter(inCreditCol).map((w) => ({ ...w, text: '0' }));
+    // Grade column: letter grades plus any round-glyph/garbled token → grade O.
+    const gradeOs = conf
+      .filter((w) => !digitWords.includes(w) && !letterGrades.includes(w) && !inCreditCol(w) && looksLikeGradeO(w.text))
+      .map((w) => ({ ...w, text: 'O' }));
+    creditWords = [...digitWords, ...creditZeros];
+    gradeWords = [...letterGrades, ...gradeOs];
+    console.log(`[Layout] Column mode — creditX≈${Math.round(creditColX)} gradeX≈${Math.round(gradeColX)} | ${creditZeros.length} credit-0, ${gradeOs.length} grade-O`);
+  }
 
   console.log(`[Layout] ${creditWords.length} credits, ${gradeWords.length} grades (threshold=${CONF_THRESHOLD})`);
   console.log(`[Layout] Credits:`, creditWords.map(w => `${w.text}@y${Math.round((w.bbox.y0+w.bbox.y1)/2)}`).join(', '));
@@ -132,8 +183,8 @@ function parseByLayout(words: TWord[]): Hit[] {
     if (bestIdx >= 0) {
       const gw = sortedGrades[bestIdx];
       const grade = normalizeGrade(gw.text);
-      const credits = parseInt(cw.text.trim());
-      if (grade && credits > 0) {
+      const credits = creditValue(cw.text);
+      if (grade && !Number.isNaN(credits)) {
         usedGrades.add(bestIdx);
         const conf = Math.round((cw.confidence + gw.confidence) / 2);
         hits.push({ credits, grade, confidence: conf, sourceLine: `ly${Math.round(cY)}` });
@@ -162,8 +213,8 @@ function parseByLayout(words: TWord[]): Hit[] {
     if (bestIdx >= 0 && bestDist < yTol * 3) { // 3× wider rescue tolerance
       const gw = sortedGrades[bestIdx];
       const grade = normalizeGrade(gw.text);
-      const credits = parseInt(cw.text.trim());
-      if (grade && credits > 0) {
+      const credits = creditValue(cw.text);
+      if (grade && !Number.isNaN(credits)) {
         usedGrades.add(bestIdx);
         const conf = Math.max(30, Math.round((cw.confidence + gw.confidence) / 2) - 10);
         hits.push({ credits, grade, confidence: conf, sourceLine: `rescue-ly${Math.round(cY)}` });
