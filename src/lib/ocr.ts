@@ -69,13 +69,20 @@ async function runTesseractPSM(
 
   try {
     await worker.setParameters({ tessedit_pageseg_mode: String(psm) as never });
-    const result = await worker.recognize(imageDataUrl);
+    // tesseract.js v7 only returns word-level data when `blocks` output is enabled.
+    const result = await worker.recognize(imageDataUrl, {}, { blocks: true });
     const text = result.data.text ?? '';
-    const words: TWord[] = (result.data.words ?? []).map((w) => ({
-      text: w.text,
-      confidence: w.confidence,
-      bbox: w.bbox,
-    }));
+    // Flatten block → paragraph → line → word to collect bounding boxes.
+    const words: TWord[] = [];
+    for (const block of result.data.blocks ?? []) {
+      for (const para of block.paragraphs ?? []) {
+        for (const line of para.lines ?? []) {
+          for (const w of line.words ?? []) {
+            words.push({ text: w.text, confidence: w.confidence, bbox: w.bbox });
+          }
+        }
+      }
+    }
     const confidences = words.map((w) => w.confidence);
 
     console.log(`[OCR] PSM ${psm} attempt ${attemptNum}: ${text.length} chars, ${words.length} words`);
@@ -165,7 +172,7 @@ export async function runOCROnPDF(
     const ctx = canvas.getContext('2d')!;
     canvas.width = viewport.width;
     canvas.height = viewport.height;
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    await page.render({ canvas, canvasContext: ctx, viewport }).promise;
     const imageDataUrl = canvas.toDataURL('image/png');
     const { text, confidences, words } = await imageToOCR(
       imageDataUrl,
