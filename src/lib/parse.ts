@@ -25,15 +25,6 @@ function isZeroLike(raw: string): boolean {
   return /^(0|O+|Q|D|CO)$/i.test(raw.trim().replace(/\s+/g, ''));
 }
 
-// The round "O" glyph is frequently mangled by OCR into bracketed/letter noise
-// such as "[e]", "[o]", "[6]", "(c)". Used ONLY for the grade column, where the
-// only round-glyph grade is O — so any such token is treated as grade O.
-function looksLikeGradeO(raw: string): boolean {
-  const s = raw.trim().toUpperCase().replace(/\s+/g, '');
-  if (isZeroLike(s)) return true;
-  return /^[[({]?[EOQCDG06]{1,2}[\])}]?$/.test(s);
-}
-
 // Numeric credit value of a credit-column token (0-6), or NaN if not a credit.
 function creditValue(raw: string): number {
   const t = raw.trim();
@@ -125,45 +116,78 @@ function parseByLayout(words: TWord[]): Hit[] {
   const creditColX = median(digitWords.map(cx));
   const gradeColX = median(letterGrades.map(cx));
 
-  // ── Column-aware mode ─────────────────────────────────────────────────────
-  // When both columns are found with a clear horizontal gap, classify each
-  // ambiguous "0/O" token by which column it sits in. This separates the credit
-  // digit 0 from the grade letter O — the single biggest source of OCR errors.
-  let creditWords: TWord[] = digitWords;
-  let gradeWords: TWord[] = conf.filter((w) => normalizeGrade(w.text) !== '');
-
   const columnsResolved =
     Number.isFinite(creditColX) && Number.isFinite(gradeColX) && creditColX < gradeColX;
 
-  if (columnsResolved) {
-    const inCreditCol = (w: TWord) => Math.abs(cx(w) - creditColX) <= Math.abs(cx(w) - gradeColX);
-    // Credit column: real digits 1-6 plus any 0-like token sitting in the credit column.
-    const creditZeros = zeroWords.filter(inCreditCol).map((w) => ({ ...w, text: '0' }));
-    // Grade column: letter grades plus any round-glyph/garbled token → grade O.
-    const gradeOs = conf
-      .filter((w) => !digitWords.includes(w) && !letterGrades.includes(w) && !inCreditCol(w) && looksLikeGradeO(w.text))
-      .map((w) => ({ ...w, text: 'O' }));
-    creditWords = [...digitWords, ...creditZeros];
-    gradeWords = [...letterGrades, ...gradeOs];
-    console.log(`[Layout] Column mode — creditX≈${Math.round(creditColX)} gradeX≈${Math.round(gradeColX)} | ${creditZeros.length} credit-0, ${gradeOs.length} grade-O`);
-  }
-
-  console.log(`[Layout] ${creditWords.length} credits, ${gradeWords.length} grades (threshold=${CONF_THRESHOLD})`);
-  console.log(`[Layout] Credits:`, creditWords.map(w => `${w.text}@y${Math.round((w.bbox.y0+w.bbox.y1)/2)}`).join(', '));
-  console.log(`[Layout] Grades:`, gradeWords.map(w => `${w.text}@y${Math.round((w.bbox.y0+w.bbox.y1)/2)}`).join(', '));
-
-  if (!creditWords.length || !gradeWords.length) return [];
-
-  // Estimate line height from word heights (use 75th percentile for robustness)
+  // Estimate line height from word heights (75th percentile is robust to outliers),
+  // then use a generous vertical tolerance for "same row".
   const heights = combined
     .filter(w => w.bbox.y1 - w.bbox.y0 > 4 && w.bbox.y1 - w.bbox.y0 < 200)
     .map(w => w.bbox.y1 - w.bbox.y0);
   heights.sort((a, b) => a - b);
   const p75H = heights[Math.floor(heights.length * 0.75)] ?? 40;
-  // Use 3.5× line height as Y tolerance — generous for multi-line description rows
   const yTol = p75H * 3.5;
+  const cyOf = (w: TWord) => (w.bbox.y0 + w.bbox.y1) / 2;
 
-  console.log(`[Layout] p75 line height=${p75H}px, Y tolerance=${yTol.toFixed(0)}px`);
+  console.log(`[Layout] p75 line height=${p75H}px, Y tolerance=${yTol.toFixed(0)}px, columns=${columnsResolved}`);
+
+  // ── Column-aware mode (primary) ───────────────────────────────────────────
+  // Rows are driven by the credit column. For each credit, the grade is whatever
+  // token sits in the grade column on the same row. Letter grades (A+ A B+ B C U)
+  // OCR cleanly at high confidence, so ANY unreadable grade-column token on a
+  // credit row is grade O — this absorbs every way Tesseract mangles the round O
+  // glyph (Oo, [e], [6], ©], ()…) without enumerating them.
+  if (columnsResolved) {
+    const midX = (creditColX + gradeColX) / 2;
+    const colSpan = gradeColX - creditColX;
+    const inCreditCol = (w: TWord) => Math.abs(cx(w) - creditColX) <= Math.abs(cx(w) - gradeColX);
+
+    // Grade-column cells: right of the credit/grade midpoint, not far past the
+    // grade column, and not a bare credit digit that drifted rightward.
+    const gradeCells = conf
+      .filter((w) => cx(w) > midX && cx(w) < gradeColX + colSpan && !/^[1-6]$/.test(w.text.trim()))
+      .sort((a, b) => a.bbox.y0 - b.bbox.y0);
+
+    // Credit-column rows: digits 1-6 plus 0-like tokens sitting in the credit column.
+    const creditCells = [
+      ...digitWords,
+      ...zeroWords.filter(inCreditCol).map((w) => ({ ...w, text: '0' })),
+    ].sort((a, b) => a.bbox.y0 - b.bbox.y0);
+
+    const usedG = new Set<number>();
+    const colHits: Hit[] = [];
+    for (const cw of creditCells) {
+      const credits = creditValue(cw.text);
+      if (Number.isNaN(credits)) continue;
+      const cY = cyOf(cw);
+      let bestIdx = -1, bestDist = Infinity;
+      for (let gi = 0; gi < gradeCells.length; gi++) {
+        if (usedG.has(gi)) continue;
+        const d = Math.abs(cyOf(gradeCells[gi]) - cY);
+        if (d <= yTol && d < bestDist) { bestDist = d; bestIdx = gi; }
+      }
+      if (bestIdx < 0) {
+        console.log(`[Layout] ✗ credit ${cw.text}@y${Math.round(cY)} — no grade cell on this row`);
+        continue;
+      }
+      usedG.add(bestIdx);
+      const gw = gradeCells[bestIdx];
+      // Grade-column token on a credit row ⇒ use it if readable, otherwise it's O.
+      const grade = normalizeGrade(gw.text) || 'O';
+      const cfd = Math.round((cw.confidence + gw.confidence) / 2);
+      colHits.push({ credits, grade, confidence: cfd, sourceLine: `ly${Math.round(cY)}` });
+      console.log(`[Layout] ✓ ${credits} ${grade}  row y=${Math.round(cY)} grade="${gw.text}"→${grade} conf=${cfd}`);
+    }
+    colHits.sort((a, b) =>
+      parseInt(a.sourceLine.replace(/\D/g, '') || '0') - parseInt(b.sourceLine.replace(/\D/g, '') || '0'));
+    console.log(`[Layout] Column mode — ${colHits.length} rows (creditX≈${Math.round(creditColX)}, gradeX≈${Math.round(gradeColX)})`);
+    return colHits;
+  }
+
+  // ── Fallback: Y-only matching when the two columns can't be resolved ───────
+  const creditWords = digitWords;
+  const gradeWords = conf.filter((w) => normalizeGrade(w.text) !== '');
+  if (!creditWords.length || !gradeWords.length) return [];
 
   const sortedCredits = [...creditWords].sort((a, b) => a.bbox.y0 - b.bbox.y0);
   const sortedGrades  = [...gradeWords].sort((a, b) => a.bbox.y0 - b.bbox.y0);
@@ -172,12 +196,11 @@ function parseByLayout(words: TWord[]): Hit[] {
 
   // First pass — match within normal tolerance
   for (const cw of sortedCredits) {
-    const cY = (cw.bbox.y0 + cw.bbox.y1) / 2;
+    const cY = cyOf(cw);
     let bestIdx = -1, bestDist = Infinity;
     for (let gi = 0; gi < sortedGrades.length; gi++) {
       if (usedGrades.has(gi)) continue;
-      const gY = (sortedGrades[gi].bbox.y0 + sortedGrades[gi].bbox.y1) / 2;
-      const d = Math.abs(gY - cY);
+      const d = Math.abs(cyOf(sortedGrades[gi]) - cY);
       if (d <= yTol && d < bestDist) { bestDist = d; bestIdx = gi; }
     }
     if (bestIdx >= 0) {
@@ -188,29 +211,22 @@ function parseByLayout(words: TWord[]): Hit[] {
         usedGrades.add(bestIdx);
         const conf = Math.round((cw.confidence + gw.confidence) / 2);
         hits.push({ credits, grade, confidence: conf, sourceLine: `ly${Math.round(cY)}` });
-        console.log(`[Layout] ✓ ${credits} ${grade}  creditY=${Math.round(cY)} gradeY=${Math.round((gw.bbox.y0+gw.bbox.y1)/2)} dist=${Math.round(bestDist)} conf=${conf}`);
       }
-    } else {
-      console.log(`[Layout] ✗ credit ${cw.text} @y${Math.round(cY)} — no grade within ${yTol.toFixed(0)}px`);
     }
   }
 
-  // Rescue pass — any remaining unmatched grades: pair with nearest unmatched credit
-  // (handles cases where Y positions drift due to multi-line descriptions)
-  const unmatchedCredits = sortedCredits.filter(cw => {
-    const cY = Math.round((cw.bbox.y0 + cw.bbox.y1) / 2);
-    return !hits.some(h => h.sourceLine === `ly${cY}`);
-  });
+  // Rescue pass — leftover credits pair with the nearest remaining grade.
+  const unmatchedCredits = sortedCredits.filter(cw =>
+    !hits.some(h => h.sourceLine === `ly${Math.round(cyOf(cw))}`));
   for (const cw of unmatchedCredits) {
-    const cY = (cw.bbox.y0 + cw.bbox.y1) / 2;
+    const cY = cyOf(cw);
     let bestIdx = -1, bestDist = Infinity;
     for (let gi = 0; gi < sortedGrades.length; gi++) {
       if (usedGrades.has(gi)) continue;
-      const gY = (sortedGrades[gi].bbox.y0 + sortedGrades[gi].bbox.y1) / 2;
-      const d = Math.abs(gY - cY);
+      const d = Math.abs(cyOf(sortedGrades[gi]) - cY);
       if (d < bestDist) { bestDist = d; bestIdx = gi; }
     }
-    if (bestIdx >= 0 && bestDist < yTol * 3) { // 3× wider rescue tolerance
+    if (bestIdx >= 0 && bestDist < yTol * 3) {
       const gw = sortedGrades[bestIdx];
       const grade = normalizeGrade(gw.text);
       const credits = creditValue(cw.text);
@@ -218,7 +234,6 @@ function parseByLayout(words: TWord[]): Hit[] {
         usedGrades.add(bestIdx);
         const conf = Math.max(30, Math.round((cw.confidence + gw.confidence) / 2) - 10);
         hits.push({ credits, grade, confidence: conf, sourceLine: `rescue-ly${Math.round(cY)}` });
-        console.log(`[Layout] ✓ RESCUE ${credits} ${grade}  dist=${Math.round(bestDist)}`);
       }
     }
   }
