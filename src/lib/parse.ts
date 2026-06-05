@@ -278,9 +278,10 @@ function parseByText(rawText: string): Hit[] {
   const lines = text.split('\n');
   const hits: Hit[] = [];
 
-  // Pass 1 — same-line token scan
-  for (const rl of lines) {
-    const line = rl.trim();
+  // Pass 1 — same-line token scan. sourceLine encodes the line index (position),
+  // so distinct subjects are never merged by the dedup even if their text matches.
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx].trim();
     if (!line || SKIP_HEADER_RE.test(line)) continue;
     const tokens = line.split(/\s+/).filter(Boolean);
     for (let gi = 0; gi < tokens.length; gi++) {
@@ -290,7 +291,7 @@ function parseByText(rawText: string): Hit[] {
         const ci = gi - di;
         if (ci < 0) break;
         if (/^[1-6]$/.test(tokens[ci])) {
-          hits.push({ credits: parseInt(tokens[ci]), grade, confidence: 80, sourceLine: line });
+          hits.push({ credits: parseInt(tokens[ci]), grade, confidence: 80, sourceLine: `L${idx}` });
           break;
         }
       }
@@ -322,7 +323,7 @@ function parseByText(rawText: string): Hit[] {
         const grade = tokenToGrade(nts[k]);
         if (!grade) continue;
         if (k > 0 && /^[1-6]$/.test(nts[k - 1])) continue;
-        hits.push({ credits, grade, confidence: 65, sourceLine: line });
+        hits.push({ credits, grade, confidence: 65, sourceLine: `L${i}` });
         found = true; break;
       }
       if (found) break;
@@ -333,7 +334,7 @@ function parseByText(rawText: string): Hit[] {
   const PAT_PF = /\b([1-6])\s+(O|A\+|A|B\+|B|C|U)\s+(?:PASS|FAIL)\b/g;
   for (const m of text.matchAll(PAT_PF)) {
     const li = text.slice(0, m.index).split('\n').length - 1;
-    hits.push({ credits: parseInt(m[1]), grade: m[2] as GradeKey, confidence: 95, sourceLine: lines[li]?.trim() ?? '' });
+    hits.push({ credits: parseInt(m[1]), grade: m[2] as GradeKey, confidence: 95, sourceLine: `L${li}` });
   }
 
   // Pass 3 — grade-point regex
@@ -342,7 +343,7 @@ function parseByText(rawText: string): Hit[] {
     const gp = parseInt(m[0].split(/\s+/).pop() ?? '0');
     const expected = (GRADE_POINTS as Record<string, number>)[m[2]] ?? -1;
     const li = text.slice(0, m.index).split('\n').length - 1;
-    hits.push({ credits: parseInt(m[1]), grade: m[2] as GradeKey, confidence: expected === gp ? 90 : 70, sourceLine: lines[li]?.trim() ?? '' });
+    hits.push({ credits: parseInt(m[1]), grade: m[2] as GradeKey, confidence: expected === gp ? 90 : 70, sourceLine: `L${li}` });
   }
 
   // Pass 4 — column-order pairing
@@ -365,10 +366,12 @@ function parseByText(rawText: string): Hit[] {
         hits.push({ credits: cs[pi], grade: gs[pi], confidence: 50, sourceLine: `col-${pi}` });
   }
 
-  // Deduplicate
+  // Deduplicate by position — collapses the SAME subject found by multiple passes
+  // (same line index), but keeps two different subjects that share credit+grade
+  // because they live on different lines. 0-credit courses are dropped.
   const seen = new Map<string, Hit>();
   for (const h of hits) {
-    const key = `${h.credits}|${h.grade}|${h.sourceLine}`;
+    const key = `${h.sourceLine}|${h.credits}|${h.grade}`;
     const ex = seen.get(key);
     if (!ex || h.confidence > ex.confidence) seen.set(key, h);
   }
