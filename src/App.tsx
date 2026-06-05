@@ -6,13 +6,21 @@ import GPACalculator from './components/GPACalculator';
 import CGPACalculator from './components/CGPACalculator';
 import AIScanner from './components/AIScanner';
 import Predictor from './components/Predictor';
+import WelcomeModal from './components/WelcomeModal';
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('gpa');
+  const [showWelcome, setShowWelcome] = useState(true);
 
   return (
     <div className="relative min-h-screen">
       <ParticleBackground />
+
+      <AnimatePresence>
+        {showWelcome && (
+          <WelcomeModal onClose={() => setShowWelcome(false)} onChoose={setTab} />
+        )}
+      </AnimatePresence>
 
       {/* Background gradients */}
       <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
