@@ -34,9 +34,13 @@ async function preprocessImage(imageSource: string): Promise<string> {
 
       const id = ctx.getImageData(0, 0, dstW, dstH);
       const d = id.data;
+      // Grayscale + mild contrast. Keep the factor low (1.2): SRM portal grades are
+      // printed in light gray, and an aggressive stretch (e.g. 1.5) brightens that
+      // faint text into the white background and Tesseract loses whole rows.
+      const CONTRAST = 1.2;
       for (let i = 0; i < d.length; i += 4) {
         const gray = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
-        const out = Math.max(0, Math.min(255, Math.round(128 + (gray - 128) * 1.5)));
+        const out = Math.max(0, Math.min(255, Math.round(128 + (gray - 128) * CONTRAST)));
         d[i] = d[i + 1] = d[i + 2] = out;
       }
       ctx.putImageData(id, 0, 0);
