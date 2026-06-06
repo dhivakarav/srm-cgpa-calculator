@@ -60,14 +60,14 @@ async function runTesseractPSM(
   attemptNum: number,
   onProgress: OCRProgressCallback
 ): Promise<{ text: string; confidences: number[]; words: TWord[] }> {
-  onProgress(5 + attemptNum * 2, '⚙️ Loading OCR engine...');
+  onProgress(5 + attemptNum * 2, 'Loading OCR engine...');
 
   const worker = await createWorker('eng', 1, {
     logger: (m) => {
       if (m.status === 'recognizing text')
-        onProgress(20 + Math.round(m.progress * 55), '🔍 Reading text...');
+        onProgress(20 + Math.round(m.progress * 55), 'Reading text...');
       else if (m.status === 'loading language traineddata')
-        onProgress(10, '📦 Loading language data...');
+        onProgress(10, 'Loading language data...');
     },
   });
 
@@ -136,15 +136,15 @@ export async function runOCROnImage(
   file: File,
   onProgress: OCRProgressCallback
 ): Promise<ExtractionResult> {
-  onProgress(0, '🔍 Reading marksheet...');
+  onProgress(0, 'Reading marksheet...');
   const url = URL.createObjectURL(file);
   try {
     const { text, confidences, words } = await imageToOCR(url, onProgress);
-    onProgress(85, '📚 Extracting grades...');
+    onProgress(85, 'Extracting grades...');
     const result = parseOCRResult(text, words, confidences);
-    onProgress(95, '🧠 Calculating...');
+    onProgress(95, 'Calculating...');
     await new Promise((r) => setTimeout(r, 150));
-    onProgress(100, '✨ Done!');
+    onProgress(100, 'Done!');
     return result;
   } finally {
     URL.revokeObjectURL(url);
@@ -155,7 +155,7 @@ export async function runOCROnPDF(
   file: File,
   onProgress: OCRProgressCallback
 ): Promise<ExtractionResult[]> {
-  onProgress(0, '🔍 Loading PDF...');
+  onProgress(0, 'Loading PDF...');
   const pdfjsLib = await import('pdfjs-dist');
   pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.mjs',
@@ -169,7 +169,7 @@ export async function runOCROnPDF(
 
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
     const base = Math.round(((pageNum - 1) / numPages) * 80);
-    onProgress(base, `🔍 Page ${pageNum}/${numPages}...`);
+    onProgress(base, `Page ${pageNum}/${numPages}...`);
     const page = await pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: 2.5 });
     const canvas = document.createElement('canvas');
@@ -185,6 +185,6 @@ export async function runOCROnPDF(
     results.push(parseOCRResult(text, words, confidences));
   }
 
-  onProgress(100, '✨ Done!');
+  onProgress(100, 'Done!');
   return results;
 }

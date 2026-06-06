@@ -195,7 +195,7 @@ export default function CGPACalculator() {
             >
               <CountUp value={cgpa} decimals={2} />
             </div>
-            <Pill color={meta.color}>{meta.emoji} {meta.label}</Pill>
+            <Pill color={meta.color}>{meta.label}</Pill>
           </Glass>
 
           <div className="grid grid-cols-2 gap-3">
@@ -206,7 +206,7 @@ export default function CGPACalculator() {
           </div>
 
           <Glass className="p-4">
-            <p className="text-xs text-slate-500 font-medium mb-2">💡 Tip</p>
+            <p className="text-xs text-slate-500 font-medium mb-2">Tip</p>
             <p className="text-sm text-slate-300 leading-relaxed">{meta.tip}</p>
           </Glass>
         </div>

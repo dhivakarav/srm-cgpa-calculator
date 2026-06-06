@@ -176,7 +176,6 @@ export default function AIScanner() {
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="p-4 rounded-xl border border-neutral-800/30 bg-neutral-800/10 text-neutral-600 text-sm flex items-start gap-3"
           >
-            <span className="text-lg mt-0.5">⚠️</span>
             <div>
               <p className="font-medium">OCR Error</p>
               <p className="text-neutral-600/70 text-xs mt-0.5">{ocrError}</p>
@@ -214,7 +213,7 @@ export default function AIScanner() {
                         <img src={f.preview} alt="preview" className="w-full h-full object-cover" />
                       ) : (
                         <div className="text-center p-4">
-                          <div className="text-3xl mb-1">📄</div>
+                          <div className="text-sm font-bold text-slate-400 mb-1">PDF</div>
                           <p className="text-xs text-slate-400 truncate max-w-[100px]">{f.file.name}</p>
                         </div>
                       )}
@@ -231,7 +230,7 @@ export default function AIScanner() {
                   className="w-full py-4 rounded-2xl font-bold text-white text-sm cursor-pointer"
                   style={{ background: '#0a0a0a', boxShadow: '0 0 30px rgba(0,0,0,0.4)' }}
                 >
-                  🤖 Analyze with AI
+                  Analyze with AI
                 </motion.button>
               </motion.div>
             )}
@@ -291,16 +290,16 @@ function UploadZone({ isDragging, onDragOver, onDragLeave, onDrop, onClick }: {
       className="border-2 border-dashed rounded-3xl p-12 text-center cursor-pointer"
       style={{ background: isDragging ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.02)' }}
     >
-      <motion.div className="text-6xl mb-4" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}>
-        🤖
+      <motion.div className="flex justify-center mb-4" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" /></svg>
       </motion.div>
       <p className="text-xl font-semibold text-black mb-2">Drop your marksheet here</p>
       <p className="text-slate-400 text-sm mb-4">PNG, JPG, JPEG or PDF (multi-page supported)</p>
       <div className="flex items-center justify-center gap-4 flex-wrap">
-        <Pill color="#0a0a0a">📷 Screenshot</Pill>
-        <Pill color="#0a0a0a">📄 PDF</Pill>
-        <Pill color="#0a0a0a">🖼️ Photo</Pill>
-        <Pill color="#0a0a0a">🔒 100% Offline</Pill>
+        <Pill color="#0a0a0a">Screenshot</Pill>
+        <Pill color="#0a0a0a">PDF</Pill>
+        <Pill color="#0a0a0a">Photo</Pill>
+        <Pill color="#0a0a0a">100% Offline</Pill>
       </div>
     </motion.div>
   );
@@ -311,14 +310,14 @@ function ProcessingOverlay({ progress, status, file }: {
   status: string;
   file?: UploadedFile;
 }) {
-  const steps = ['🔍 Reading', '📚 Extracting', '🧠 Calculating', '✨ Finalizing'];
+  const steps = ['Reading', 'Extracting', 'Calculating', 'Finalizing'];
   return (
     <Glass className="p-8 text-center space-y-6">
       <div className="relative mx-auto w-full max-w-sm aspect-video rounded-xl overflow-hidden bg-black/40 border border-black/[0.08]">
         {file?.preview ? (
           <img src={file.preview} alt="scanning" className="w-full h-full object-contain opacity-50" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl">📄</div>
+          <div className="w-full h-full flex items-center justify-center text-sm font-bold text-slate-400">PDF</div>
         )}
         <motion.div
           className="absolute left-0 right-0 h-0.5"
@@ -385,11 +384,11 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           <Pill color={validCount > 0 ? '#0a0a0a' : '#0a0a0a'}>
-            {validCount > 0 ? `✅ ${validCount} subjects found` : '⚠️ No subjects detected'}
+            {validCount > 0 ? `${validCount} subjects found` : 'No subjects detected'}
           </Pill>
-          {accuracy > 0 && <Pill color="#0a0a0a">🎯 {accuracy}% accuracy</Pill>}
-          {registerNumber && <Pill color="#0a0a0a">🪪 {registerNumber}</Pill>}
-          {semesterNumber && <Pill color="#0a0a0a">📅 Semester {semesterNumber}</Pill>}
+          {accuracy > 0 && <Pill color="#0a0a0a">{accuracy}% accuracy</Pill>}
+          {registerNumber && <Pill color="#0a0a0a">{registerNumber}</Pill>}
+          {semesterNumber && <Pill color="#0a0a0a">Semester {semesterNumber}</Pill>}
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-slate-400">Live GPA:</span>
@@ -400,7 +399,6 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
       {/* Empty state */}
       {isEmpty && (
         <Glass className="p-8 text-center space-y-3">
-          <p className="text-4xl">🔎</p>
           <p className="text-black font-semibold">No grade data detected</p>
           <p className="text-slate-400 text-sm max-w-md mx-auto">
             The OCR couldn't extract grades automatically. This can happen with low-res, rotated, or heavily watermarked images.
@@ -451,7 +449,7 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
                           <p className="text-[10px] text-slate-600 mt-0.5 pl-1">{row.subjectCode}</p>
                         )}
                         {row.validationError && (
-                          <p className="text-neutral-600 text-[10px] mt-0.5 pl-1">⚠ {row.validationError}</p>
+                          <p className="text-neutral-600 text-[10px] mt-0.5 pl-1">{row.validationError}</p>
                         )}
                       </td>
                       <td className="px-3 py-2">

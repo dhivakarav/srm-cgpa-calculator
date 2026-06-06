@@ -82,28 +82,28 @@ export const PERFORMANCE_META: Record<
 > = {
   outstanding: {
     label: 'Outstanding',
-    emoji: '🚀',
+    emoji: '',
     color: '#0a0a0a',
     gradient: 'from-neutral-900 to-neutral-700',
     tip: 'Phenomenal work! You\'re in the top tier. Consider research internships or higher studies abroad.',
   },
   excellent: {
     label: 'Excellent',
-    emoji: '⭐',
+    emoji: '',
     color: '#262626',
     gradient: 'from-neutral-800 to-neutral-600',
     tip: 'Great performance! Push for a 9.5+ by targeting O grades in your strongest subjects.',
   },
   good: {
     label: 'Good Progress',
-    emoji: '📈',
+    emoji: '',
     color: '#404040',
     gradient: 'from-neutral-700 to-neutral-500',
     tip: 'Solid foundation. Focus on upgrading B+ and B grades to A and A+ to jump into Excellent.',
   },
   'needs-improvement': {
     label: 'Needs Improvement',
-    emoji: '📚',
+    emoji: '',
     color: '#525252',
     gradient: 'from-neutral-600 to-neutral-400',
     tip: 'Don\'t worry — consistency beats intensity. Aim to clear arrears and target at least C in all subjects.',

@@ -7,11 +7,11 @@ interface NavbarProps {
   onChange: (tab: Tab) => void;
 }
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'gpa', label: 'GPA Calc', icon: '📊' },
-  { id: 'cgpa', label: 'CGPA Calc', icon: '🎓' },
-  { id: 'scanner', label: 'AI Scanner', icon: '🤖' },
-  { id: 'predictor', label: 'Predictor', icon: '🔮' },
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'gpa', label: 'GPA' },
+  { id: 'cgpa', label: 'CGPA' },
+  { id: 'scanner', label: 'Scan' },
+  { id: 'predictor', label: 'Predict' },
 ];
 
 export default function Navbar({ activeTab, onChange }: NavbarProps) {
@@ -24,12 +24,12 @@ export default function Navbar({ activeTab, onChange }: NavbarProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black text-white"
               style={{
                 background: '#0a0a0a',
                 boxShadow: '0 0 16px rgba(0,0,0,0.4)',
               }}>
-              🎓
+              S
             </div>
             <div className="hidden sm:block">
               <div className="text-sm font-bold text-black leading-none">SRM</div>
@@ -55,10 +55,7 @@ export default function Navbar({ activeTab, onChange }: NavbarProps) {
                     transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                   />
                 )}
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <span>{tab.icon}</span>
-                  <span className="hidden md:inline">{tab.label}</span>
-                </span>
+                <span className="relative z-10">{tab.label}</span>
               </button>
             ))}
           </nav>

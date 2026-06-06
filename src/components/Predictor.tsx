@@ -144,11 +144,11 @@ export default function Predictor() {
                 {predictedCGPA.toFixed(2)}
               </p>
               <p className="text-xs text-slate-500 mt-1">
-                {predictedCGPA > currentCGPA ? '📈 ' : predictedCGPA < currentCGPA ? '📉 ' : '—'}
+                {predictedCGPA > currentCGPA ? 'â ' : predictedCGPA < currentCGPA ? 'â ' : '—'}
                 {predictedCGPA !== currentCGPA ? `${Math.abs(predictedCGPA - currentCGPA).toFixed(2)} change` : 'No change'}
               </p>
             </div>
-            <Pill color={meta.color}>{meta.emoji} {meta.label}</Pill>
+            <Pill color={meta.color}>{meta.label}</Pill>
           </Glass>
 
           <Glass className="p-4 space-y-2">
@@ -177,7 +177,7 @@ export default function Predictor() {
           </Glass>
 
           <Glass className="p-4">
-            <p className="text-xs text-slate-500 font-medium mb-2">💡 Insight</p>
+            <p className="text-xs text-slate-500 font-medium mb-2">Insight</p>
             <p className="text-xs text-slate-300 leading-relaxed">{meta.tip}</p>
           </Glass>
         </div>

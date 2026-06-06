@@ -209,7 +209,7 @@ export default function GPACalculator() {
               label={gpa > 0 ? gpa.toFixed(2) : '–'}
               sublabel="/ 10.0"
             />
-            <Pill color={meta.color}>{meta.emoji} {meta.label}</Pill>
+            <Pill color={meta.color}>{meta.label}</Pill>
             <div className="text-center space-y-1">
               <p className="text-xs text-slate-500">{validCount} subject{validCount !== 1 ? 's' : ''} · {totalCredits} credits</p>
             </div>
@@ -224,7 +224,7 @@ export default function GPACalculator() {
 
           {/* Study tip */}
           <Glass className="p-4">
-            <p className="text-xs text-slate-500 font-medium mb-2">💡 Study Tip</p>
+            <p className="text-xs text-slate-500 font-medium mb-2">Study Tip</p>
             <p className="text-sm text-slate-300 leading-relaxed">{meta.tip}</p>
           </Glass>
         </div>

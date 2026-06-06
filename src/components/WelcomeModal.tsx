@@ -77,13 +77,13 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
             initial={{ scale: 0, rotate: -20 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
-            className="mx-auto mb-5 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
+            className="mx-auto mb-5 w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white"
             style={{
               background: '#0a0a0a',
               boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
             }}
           >
-            🎓
+            S
           </motion.div>
 
           <p className="text-xs font-semibold tracking-[0.2em] uppercase text-purple-400 mb-2">
@@ -110,7 +110,7 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
                 boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
               }}
             >
-              <span className="text-lg">🎯</span> Calculate your CGPA
+              Calculate your CGPA
             </motion.button>
 
             <motion.button
@@ -124,7 +124,7 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
                 border: '1px solid rgba(0,0,0,0.18)',
               }}
             >
-              <span className="text-lg">📸</span> Upload your Screenshot
+              Upload your Screenshot
             </motion.button>
           </div>
 

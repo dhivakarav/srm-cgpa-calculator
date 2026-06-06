@@ -131,9 +131,8 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
               <Glass className="p-8 text-center space-y-5 border-black/30">
                 {/* Glow */}
                 <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ background: `radial-gradient(ellipse at 50% 0%, ${meta.color}20, transparent 60%)` }} />
-                <p className="text-4xl">🎉</p>
                 <h2 className="text-2xl font-black text-black">Congratulations!</h2>
-                <Pill color={meta.color} className="text-sm">{meta.emoji} {meta.label}</Pill>
+                <Pill color={meta.color} className="text-sm">{meta.label}</Pill>
 
                 <div className="grid grid-cols-3 gap-4 my-2">
                   <div>
@@ -177,13 +176,12 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
         {/* Stat cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Semester GPA', value: gpa.toFixed(2), color: meta.color, icon: '📊' },
-            { label: 'CGPA', value: (cgpa > 0 ? cgpa : gpa).toFixed(2), color: '#0a0a0a', icon: '🎓' },
-            { label: 'Percentage', value: `${Math.max(0, percentage).toFixed(1)}%`, color: '#0a0a0a', icon: '📈' },
+            { label: 'Semester GPA', value: gpa.toFixed(2), color: meta.color, icon: '' },
+            { label: 'CGPA', value: (cgpa > 0 ? cgpa : gpa).toFixed(2), color: '#0a0a0a', icon: '' },
+            { label: 'Percentage', value: `${Math.max(0, percentage).toFixed(1)}%`, color: '#0a0a0a', icon: '' },
             { label: 'Performance', value: meta.label, color: meta.color, icon: meta.emoji },
           ].map((card) => (
             <Glass key={card.label} className="p-4 text-center" hover>
-              <p className="text-xl mb-1">{card.icon}</p>
               <p className="text-xs text-slate-500 mb-1">{card.label}</p>
               <p className="font-bold text-sm" style={{ color: card.color }}>{card.value}</p>
             </Glass>
@@ -241,7 +239,7 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
         {/* What-If Predictor */}
         {semesters.length > 0 && (
           <Glass className="p-5">
-            <p className="text-xs text-slate-500 font-medium mb-1">🔮 What-If Predictor</p>
+            <p className="text-xs text-slate-500 font-medium mb-1">What-If Predictor</p>
             <p className="text-[11px] text-slate-600 mb-4">Drag sliders to see how improving a semester changes your CGPA</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
@@ -318,7 +316,7 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={() => setShowModal(true)}
             className="px-4 py-2.5 rounded-xl text-sm font-medium border border-black/30 text-purple-400 hover:bg-black/10 transition-colors cursor-pointer">
-            🎉 Show Result Card
+            Show Result Card
           </motion.button>
         </div>
       </div>
