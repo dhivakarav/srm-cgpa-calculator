@@ -30,10 +30,10 @@ export default function App() {
           style={{ background: 'radial-gradient(circle, #0a0a0a, transparent)' }} />
       </div>
 
-      <div className="relative" style={{ zIndex: 1 }}>
+      <div className="relative flex min-h-screen flex-col" style={{ zIndex: 1 }}>
         <Navbar activeTab={tab} onChange={setTab} />
 
-        <main className="pb-16">
+        <main className="flex-1 w-full">
           <AnimatePresence mode="wait">
             {tab === 'gpa' && (
               <motion.div key="gpa" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }}>

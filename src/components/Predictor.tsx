@@ -38,9 +38,9 @@ export default function Predictor() {
   }
 
   return (
-    <div className="w-full max-w-none px-4 sm:px-8 lg:px-16 py-8 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
-        <h1 className="text-3xl md:text-4xl font-bold gradient-text">What-If Predictor</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text">What-If Predictor</h1>
         <p className="text-slate-400 text-sm">Simulate GPA changes and see your predicted CGPA instantly.</p>
       </motion.div>
 

@@ -21,7 +21,7 @@ export default function Navbar({ activeTab, onChange }: NavbarProps) {
         className="glass border-b border-black/[0.06]"
         style={{ backdropFilter: 'blur(24px)' }}
       >
-        <div className="max-w-none px-4 sm:px-8 lg:px-16 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
@@ -43,7 +43,8 @@ export default function Navbar({ activeTab, onChange }: NavbarProps) {
               <button
                 key={tab.id}
                 onClick={() => onChange(tab.id)}
-                className="relative px-3 py-1.5 rounded-lg text-xs font-medium transition-colors outline-none cursor-pointer"
+                aria-label={tab.label}
+                className="relative px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-colors outline-none cursor-pointer"
                 style={{ color: activeTab === tab.id ? '#fff' : 'rgba(0,0,0,0.5)' }}
               >
                 {activeTab === tab.id && (
@@ -55,8 +56,8 @@ export default function Navbar({ activeTab, onChange }: NavbarProps) {
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
-                  <span className="hidden sm:inline">{tab.icon}</span>
-                  {tab.label}
+                  <span>{tab.icon}</span>
+                  <span className="hidden md:inline">{tab.label}</span>
                 </span>
               </button>
             ))}

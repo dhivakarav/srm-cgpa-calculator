@@ -69,14 +69,14 @@ export default function GPACalculator() {
   const totalCredits = subjects.reduce((sum, s) => sum + (s.credits === '' ? 0 : Number(s.credits)), 0);
 
   return (
-    <div className="w-full max-w-none px-4 sm:px-8 lg:px-16 py-8 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-center space-y-2"
       >
-        <h1 className="text-3xl md:text-4xl font-bold gradient-text">Semester GPA Calculator</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text">Semester GPA Calculator</h1>
         <p className="text-slate-400 text-sm">Add subjects, pick grades — your GPA updates instantly.</p>
       </motion.div>
 
