@@ -58,6 +58,7 @@ export default function App() {
           </AnimatePresence>
         </main>
 
+        {tab !== 'scanner' && (
         <footer className="border-t border-black/[0.06] py-6 text-center">
           <p className="text-xs text-slate-600">
             SRM GPA & CGPA Calculator · 100% offline, no data leaves your browser
@@ -66,6 +67,7 @@ export default function App() {
             SRM IST grading system: O=10, A+=9, A=8, B+=7, B=6, C=5, U=0
           </p>
         </footer>
+        )}
       </div>
     </div>
   );

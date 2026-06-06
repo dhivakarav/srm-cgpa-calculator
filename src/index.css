@@ -1,11 +1,5 @@
 @import "tailwindcss";
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 :root {
   color-scheme: light;
   font-synthesis: none;
@@ -40,6 +34,15 @@ body {
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.12);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+/* Glassmorphism card — translucent so the background particles show through,
+   with soft layered shadows. Used by the AI Scanner full-screen hero. */
+.hero-card {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 /* "Gradient" text → solid black in the black & white theme */

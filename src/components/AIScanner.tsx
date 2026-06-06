@@ -160,6 +160,120 @@ export default function AIScanner() {
     setOcrError(null);
   };
 
+  const errorBanner = (
+    <AnimatePresence>
+      {ocrError && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+          className="w-full p-4 rounded-xl border border-neutral-800/30 bg-neutral-800/10 text-neutral-600 text-sm flex items-start gap-3"
+        >
+          <div>
+            <p className="font-medium">OCR Error</p>
+            <p className="text-neutral-600/70 text-xs mt-0.5">{ocrError}</p>
+          </div>
+          <button onClick={() => setOcrError(null)} className="ml-auto text-neutral-600/60 hover:text-neutral-600 cursor-pointer">×</button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  const fileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept="image/png,image/jpeg,image/jpg,application/pdf"
+      multiple
+      className="hidden"
+      onChange={(e) => addFiles(Array.from(e.target.files ?? []))}
+    />
+  );
+
+  const filePreview = files.length > 0 && (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="w-full mt-5 space-y-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {files.map((f) => (
+          <div key={f.id} className="relative rounded-xl overflow-hidden border border-black/[0.08] bg-black/[0.03] aspect-video flex items-center justify-center">
+            {f.type === 'image' ? (
+              <img src={f.preview} alt="preview" className="w-full h-full object-cover" />
+            ) : (
+              <div className="text-center p-4">
+                <div className="text-sm font-bold text-slate-400 mb-1">PDF</div>
+                <p className="text-xs text-slate-400 truncate max-w-[100px]">{f.file.name}</p>
+              </div>
+            )}
+            <button
+              onClick={() => removeFile(f.id)}
+              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-neutral-800/80 transition-colors cursor-pointer"
+            >×</button>
+          </div>
+        ))}
+      </div>
+      <motion.button
+        whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+        onClick={startProcessing}
+        className="w-full py-4 rounded-2xl font-bold text-white text-sm cursor-pointer"
+        style={{ background: '#0a0a0a', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}
+      >
+        Analyze with AI
+      </motion.button>
+    </motion.div>
+  );
+
+  // ── Full-screen hero (upload landing) ─────────────────────────────────────
+  if (stage === 'upload') {
+    return (
+      <section className="relative flex min-h-[calc(100svh-3.5rem)] w-full flex-col items-center justify-center px-4 py-10 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="flex w-full max-w-[900px] flex-col items-center gap-6 sm:gap-8"
+        >
+          {/* Title */}
+          <div className="text-center space-y-3">
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05, duration: 0.5 }}
+              className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text tracking-tight"
+            >
+              AI Marksheet Scanner
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12, duration: 0.5 }}
+              className="mx-auto max-w-xl text-sm sm:text-base text-slate-400"
+            >
+              Upload your SRM marksheet — the AI reads your grades automatically. You can always edit before calculating.
+            </motion.p>
+          </div>
+
+          {errorBanner}
+
+          {/* Glassmorphism upload card with a gentle float */}
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.18, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full"
+          >
+            <motion.div animate={{ y: [0, -7, 0] }} transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}>
+              <UploadZone
+                isDragging={isDragging}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              />
+            </motion.div>
+            {fileInput}
+            {filePreview}
+          </motion.div>
+        </motion.div>
+      </section>
+    );
+  }
+
+  // ── Processing / review / result stages ───────────────────────────────────
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
@@ -169,74 +283,9 @@ export default function AIScanner() {
         </p>
       </motion.div>
 
-      {/* Error banner */}
-      <AnimatePresence>
-        {ocrError && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="p-4 rounded-xl border border-neutral-800/30 bg-neutral-800/10 text-neutral-600 text-sm flex items-start gap-3"
-          >
-            <div>
-              <p className="font-medium">OCR Error</p>
-              <p className="text-neutral-600/70 text-xs mt-0.5">{ocrError}</p>
-            </div>
-            <button onClick={() => setOcrError(null)} className="ml-auto text-neutral-600/60 hover:text-neutral-600 cursor-pointer">×</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {errorBanner}
 
       <AnimatePresence mode="wait">
-        {stage === 'upload' && (
-          <motion.div key="upload" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            <UploadZone
-              isDragging={isDragging}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            />
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,application/pdf"
-              multiple
-              className="hidden"
-              onChange={(e) => addFiles(Array.from(e.target.files ?? []))}
-            />
-
-            {files.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 space-y-3">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {files.map((f) => (
-                    <div key={f.id} className="relative rounded-xl overflow-hidden border border-black/[0.08] bg-black/[0.03] aspect-video flex items-center justify-center">
-                      {f.type === 'image' ? (
-                        <img src={f.preview} alt="preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="text-center p-4">
-                          <div className="text-sm font-bold text-slate-400 mb-1">PDF</div>
-                          <p className="text-xs text-slate-400 truncate max-w-[100px]">{f.file.name}</p>
-                        </div>
-                      )}
-                      <button
-                        onClick={() => removeFile(f.id)}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-neutral-800/80 transition-colors cursor-pointer"
-                      >×</button>
-                    </div>
-                  ))}
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  onClick={startProcessing}
-                  className="w-full py-4 rounded-2xl font-bold text-white text-sm cursor-pointer"
-                  style={{ background: '#0a0a0a', boxShadow: '0 0 30px rgba(0,0,0,0.4)' }}
-                >
-                  Analyze with AI
-                </motion.button>
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-
         {stage === 'processing' && (
           <motion.div key="processing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <ProcessingOverlay progress={ocrProgress} status={ocrStatus} file={files[0]} />
@@ -286,16 +335,20 @@ function UploadZone({ isDragging, onDragOver, onDragLeave, onDrop, onClick }: {
   return (
     <motion.div
       onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop} onClick={onClick}
-      animate={{ borderColor: isDragging ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.1)', scale: isDragging ? 1.01 : 1 }}
-      className="border-2 border-dashed rounded-3xl p-12 text-center cursor-pointer"
-      style={{ background: isDragging ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.02)' }}
+      animate={{ borderColor: isDragging ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.12)', scale: isDragging ? 1.01 : 1 }}
+      transition={{ duration: 0.2 }}
+      whileHover={{ scale: 1.005 }}
+      className="hero-card border-2 border-dashed rounded-[28px] p-10 sm:p-14 md:p-16 text-center cursor-pointer"
+      style={{ borderColor: 'rgba(0,0,0,0.12)' }}
     >
-      <motion.div className="flex justify-center mb-4" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}>
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" /></svg>
-      </motion.div>
-      <p className="text-xl font-semibold text-black mb-2">Drop your marksheet here</p>
-      <p className="text-slate-400 text-sm mb-4">PNG, JPG, JPEG or PDF (multi-page supported)</p>
-      <div className="flex items-center justify-center gap-4 flex-wrap">
+      <div className="flex justify-center mb-5">
+        <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-black/[0.04] border border-black/[0.06]">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" /></svg>
+        </div>
+      </div>
+      <p className="text-xl sm:text-2xl font-semibold text-black mb-2">Drop your marksheet here</p>
+      <p className="text-slate-400 text-sm sm:text-base mb-6">or click to browse — PNG, JPG, JPEG or PDF (multi-page supported)</p>
+      <div className="flex items-center justify-center gap-2.5 sm:gap-4 flex-wrap">
         <Pill color="#0a0a0a">Screenshot</Pill>
         <Pill color="#0a0a0a">PDF</Pill>
         <Pill color="#0a0a0a">Photo</Pill>
