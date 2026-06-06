@@ -33,7 +33,7 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25 }}
       onClick={onClose}
-      style={{ background: 'rgba(5,5,12,0.72)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
     >
       <motion.div
         role="dialog"
@@ -46,15 +46,15 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
         transition={{ type: 'spring', stiffness: 320, damping: 26 }}
         className="glass relative w-full max-w-lg rounded-3xl p-8 sm:p-10 text-center overflow-hidden"
         style={{
-          border: '1px solid rgba(168,85,247,0.25)',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(168,85,247,0.15)',
+          border: '1px solid rgba(0,0,0,0.14)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.22)',
         }}
       >
         {/* Glow accents */}
-        <div className="absolute -top-24 -left-20 w-64 h-64 rounded-full pointer-events-none opacity-30"
-          style={{ background: 'radial-gradient(circle, #a855f7, transparent 70%)' }} />
-        <div className="absolute -bottom-24 -right-20 w-64 h-64 rounded-full pointer-events-none opacity-20"
-          style={{ background: 'radial-gradient(circle, #3b82f6, transparent 70%)' }} />
+        <div className="absolute -top-24 -left-20 w-64 h-64 rounded-full pointer-events-none opacity-[0.04]"
+          style={{ background: 'radial-gradient(circle, #0a0a0a, transparent 70%)' }} />
+        <div className="absolute -bottom-24 -right-20 w-64 h-64 rounded-full pointer-events-none opacity-[0.03]"
+          style={{ background: 'radial-gradient(circle, #0a0a0a, transparent 70%)' }} />
 
         {/* Close button */}
         <motion.button
@@ -63,8 +63,8 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
           transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-          className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-white cursor-pointer z-10"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+          className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-black cursor-pointer z-10"
+          style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.12)' }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M6 6l12 12M18 6L6 18" />
@@ -79,8 +79,8 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
             transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
             className="mx-auto mb-5 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
             style={{
-              background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
-              boxShadow: '0 0 28px rgba(168,85,247,0.5)',
+              background: '#0a0a0a',
+              boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
             }}
           >
             🎓
@@ -101,13 +101,13 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
           <div className="flex flex-col gap-3">
             <motion.button
               onClick={() => go('cgpa')}
-              whileHover={{ scale: 1.03, boxShadow: '0 12px 36px rgba(168,85,247,0.45)' }}
+              whileHover={{ scale: 1.03, boxShadow: '0 12px 36px rgba(0,0,0,0.45)' }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 400, damping: 22 }}
               className="w-full py-3.5 rounded-2xl font-bold text-white text-base cursor-pointer flex items-center justify-center gap-2"
               style={{
-                background: 'linear-gradient(135deg, #a855f7, #3b82f6)',
-                boxShadow: '0 8px 24px rgba(168,85,247,0.35)',
+                background: '#0a0a0a',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
               }}
             >
               <span className="text-lg">🎯</span> Calculate your CGPA
@@ -115,13 +115,13 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
 
             <motion.button
               onClick={() => go('scanner')}
-              whileHover={{ scale: 1.03, borderColor: 'rgba(168,85,247,0.6)', backgroundColor: 'rgba(168,85,247,0.10)' }}
+              whileHover={{ scale: 1.03, borderColor: 'rgba(0,0,0,0.6)', backgroundColor: 'rgba(0,0,0,0.10)' }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-              className="w-full py-3.5 rounded-2xl font-bold text-base cursor-pointer flex items-center justify-center gap-2 text-white"
+              className="w-full py-3.5 rounded-2xl font-bold text-base cursor-pointer flex items-center justify-center gap-2 text-black"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.14)',
+                background: '#ffffff',
+                border: '1px solid rgba(0,0,0,0.18)',
               }}
             >
               <span className="text-lg">📸</span> Upload your Screenshot
@@ -131,8 +131,8 @@ export default function WelcomeModal({ onClose, onChoose }: WelcomeModalProps) {
           {/* Back / dismiss link */}
           <motion.button
             onClick={onClose}
-            whileHover={{ color: '#cbd5e1' }}
-            className="mt-6 text-xs font-medium text-slate-500 hover:text-slate-300 cursor-pointer"
+            whileHover={{ color: '#0a0a0a' }}
+            className="mt-6 text-xs font-medium text-slate-500 hover:text-black cursor-pointer"
           >
             ← Maybe later
           </motion.button>

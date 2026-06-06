@@ -18,8 +18,8 @@ interface UploadedFile {
 }
 
 const GRADE_COLORS: Record<string, string> = {
-  O: '#a855f7', 'A+': '#3b82f6', A: '#06b6d4',
-  'B+': '#10b981', B: '#84cc16', C: '#f59e0b', U: '#ef4444',
+  O: '#0a0a0a', 'A+': '#0a0a0a', A: '#0a0a0a',
+  'B+': '#0a0a0a', B: '#0a0a0a', C: '#0a0a0a', U: '#0a0a0a',
 };
 
 export default function AIScanner() {
@@ -161,7 +161,7 @@ export default function AIScanner() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full max-w-none px-4 sm:px-8 lg:px-16 py-8 space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold gradient-text">AI Marksheet Scanner</h1>
         <p className="text-slate-400 text-sm">
@@ -174,14 +174,14 @@ export default function AIScanner() {
         {ocrError && (
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm flex items-start gap-3"
+            className="p-4 rounded-xl border border-neutral-800/30 bg-neutral-800/10 text-neutral-600 text-sm flex items-start gap-3"
           >
             <span className="text-lg mt-0.5">⚠️</span>
             <div>
               <p className="font-medium">OCR Error</p>
-              <p className="text-red-400/70 text-xs mt-0.5">{ocrError}</p>
+              <p className="text-neutral-600/70 text-xs mt-0.5">{ocrError}</p>
             </div>
-            <button onClick={() => setOcrError(null)} className="ml-auto text-red-400/60 hover:text-red-400 cursor-pointer">×</button>
+            <button onClick={() => setOcrError(null)} className="ml-auto text-neutral-600/60 hover:text-neutral-600 cursor-pointer">×</button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -209,7 +209,7 @@ export default function AIScanner() {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {files.map((f) => (
-                    <div key={f.id} className="relative rounded-xl overflow-hidden border border-white/[0.08] bg-white/[0.03] aspect-video flex items-center justify-center">
+                    <div key={f.id} className="relative rounded-xl overflow-hidden border border-black/[0.08] bg-black/[0.03] aspect-video flex items-center justify-center">
                       {f.type === 'image' ? (
                         <img src={f.preview} alt="preview" className="w-full h-full object-cover" />
                       ) : (
@@ -220,7 +220,7 @@ export default function AIScanner() {
                       )}
                       <button
                         onClick={() => removeFile(f.id)}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-red-500/80 transition-colors cursor-pointer"
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-neutral-800/80 transition-colors cursor-pointer"
                       >×</button>
                     </div>
                   ))}
@@ -229,7 +229,7 @@ export default function AIScanner() {
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   onClick={startProcessing}
                   className="w-full py-4 rounded-2xl font-bold text-white text-sm cursor-pointer"
-                  style={{ background: 'linear-gradient(135deg, #a855f7, #3b82f6)', boxShadow: '0 0 30px rgba(168,85,247,0.4)' }}
+                  style={{ background: '#0a0a0a', boxShadow: '0 0 30px rgba(0,0,0,0.4)' }}
                 >
                   🤖 Analyze with AI
                 </motion.button>
@@ -287,20 +287,20 @@ function UploadZone({ isDragging, onDragOver, onDragLeave, onDrop, onClick }: {
   return (
     <motion.div
       onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop} onClick={onClick}
-      animate={{ borderColor: isDragging ? 'rgba(168,85,247,0.7)' : 'rgba(255,255,255,0.1)', scale: isDragging ? 1.01 : 1 }}
+      animate={{ borderColor: isDragging ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.1)', scale: isDragging ? 1.01 : 1 }}
       className="border-2 border-dashed rounded-3xl p-12 text-center cursor-pointer"
-      style={{ background: isDragging ? 'rgba(168,85,247,0.08)' : 'rgba(255,255,255,0.02)' }}
+      style={{ background: isDragging ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.02)' }}
     >
       <motion.div className="text-6xl mb-4" animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}>
         🤖
       </motion.div>
-      <p className="text-xl font-semibold text-white mb-2">Drop your marksheet here</p>
+      <p className="text-xl font-semibold text-black mb-2">Drop your marksheet here</p>
       <p className="text-slate-400 text-sm mb-4">PNG, JPG, JPEG or PDF (multi-page supported)</p>
       <div className="flex items-center justify-center gap-4 flex-wrap">
-        <Pill color="#a855f7">📷 Screenshot</Pill>
-        <Pill color="#3b82f6">📄 PDF</Pill>
-        <Pill color="#06b6d4">🖼️ Photo</Pill>
-        <Pill color="#10b981">🔒 100% Offline</Pill>
+        <Pill color="#0a0a0a">📷 Screenshot</Pill>
+        <Pill color="#0a0a0a">📄 PDF</Pill>
+        <Pill color="#0a0a0a">🖼️ Photo</Pill>
+        <Pill color="#0a0a0a">🔒 100% Offline</Pill>
       </div>
     </motion.div>
   );
@@ -314,7 +314,7 @@ function ProcessingOverlay({ progress, status, file }: {
   const steps = ['🔍 Reading', '📚 Extracting', '🧠 Calculating', '✨ Finalizing'];
   return (
     <Glass className="p-8 text-center space-y-6">
-      <div className="relative mx-auto w-full max-w-sm aspect-video rounded-xl overflow-hidden bg-black/40 border border-white/[0.08]">
+      <div className="relative mx-auto w-full max-w-sm aspect-video rounded-xl overflow-hidden bg-black/40 border border-black/[0.08]">
         {file?.preview ? (
           <img src={file.preview} alt="scanning" className="w-full h-full object-contain opacity-50" />
         ) : (
@@ -322,12 +322,12 @@ function ProcessingOverlay({ progress, status, file }: {
         )}
         <motion.div
           className="absolute left-0 right-0 h-0.5"
-          style={{ background: 'linear-gradient(90deg, transparent, #a855f7, #3b82f6, transparent)', boxShadow: '0 0 12px #a855f7' }}
+          style={{ background: 'linear-gradient(90deg, transparent, #0a0a0a, #0a0a0a, transparent)', boxShadow: '0 0 12px #0a0a0a' }}
           animate={{ top: ['0%', '100%', '0%'] }}
           transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
         />
         {(['tl', 'tr', 'bl', 'br'] as const).map((pos) => (
-          <div key={pos} className={`absolute w-4 h-4 border-purple-500 opacity-70 ${
+          <div key={pos} className={`absolute w-4 h-4 border-black opacity-70 ${
             pos === 'tl' ? 'top-2 left-2 border-t-2 border-l-2'
             : pos === 'tr' ? 'top-2 right-2 border-t-2 border-r-2'
             : pos === 'bl' ? 'bottom-2 left-2 border-b-2 border-l-2'
@@ -337,13 +337,13 @@ function ProcessingOverlay({ progress, status, file }: {
       </div>
 
       <div className="space-y-2">
-        <motion.p key={status} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="text-white font-medium">
+        <motion.p key={status} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="text-black font-medium">
           {status || 'Initializing...'}
         </motion.p>
-        <div className="w-full max-w-sm mx-auto h-2 rounded-full bg-white/[0.06] overflow-hidden">
+        <div className="w-full max-w-sm mx-auto h-2 rounded-full bg-black/[0.06] overflow-hidden">
           <motion.div
             className="h-full rounded-full"
-            style={{ background: 'linear-gradient(90deg, #a855f7, #3b82f6)' }}
+            style={{ background: 'linear-gradient(90deg, #0a0a0a, #0a0a0a)' }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
           />
@@ -353,7 +353,7 @@ function ProcessingOverlay({ progress, status, file }: {
 
       <div className="flex justify-center gap-4 text-xs text-slate-600 flex-wrap">
         {steps.map((step, i) => (
-          <span key={step} className="transition-colors" style={{ color: progress > i * 25 ? '#a855f7' : undefined }}>
+          <span key={step} className="transition-colors" style={{ color: progress > i * 25 ? '#0a0a0a' : undefined }}>
             {step}
           </span>
         ))}
@@ -384,12 +384,12 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
       {/* Summary bar */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <Pill color={validCount > 0 ? '#10b981' : '#f59e0b'}>
+          <Pill color={validCount > 0 ? '#0a0a0a' : '#0a0a0a'}>
             {validCount > 0 ? `✅ ${validCount} subjects found` : '⚠️ No subjects detected'}
           </Pill>
-          {accuracy > 0 && <Pill color="#a855f7">🎯 {accuracy}% accuracy</Pill>}
-          {registerNumber && <Pill color="#3b82f6">🪪 {registerNumber}</Pill>}
-          {semesterNumber && <Pill color="#06b6d4">📅 Semester {semesterNumber}</Pill>}
+          {accuracy > 0 && <Pill color="#0a0a0a">🎯 {accuracy}% accuracy</Pill>}
+          {registerNumber && <Pill color="#0a0a0a">🪪 {registerNumber}</Pill>}
+          {semesterNumber && <Pill color="#0a0a0a">📅 Semester {semesterNumber}</Pill>}
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-slate-400">Live GPA:</span>
@@ -401,7 +401,7 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
       {isEmpty && (
         <Glass className="p-8 text-center space-y-3">
           <p className="text-4xl">🔎</p>
-          <p className="text-white font-semibold">No grade data detected</p>
+          <p className="text-black font-semibold">No grade data detected</p>
           <p className="text-slate-400 text-sm max-w-md mx-auto">
             The OCR couldn't extract grades automatically. This can happen with low-res, rotated, or heavily watermarked images.
             You can manually add your subjects below and still use the calculator.
@@ -409,7 +409,7 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
           <motion.button
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={onAdd}
-            className="mx-auto px-5 py-2.5 rounded-xl text-sm font-medium border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer"
+            className="mx-auto px-5 py-2.5 rounded-xl text-sm font-medium border border-black/30 text-purple-400 hover:bg-black/10 transition-colors cursor-pointer"
           >
             + Add Subjects Manually
           </motion.button>
@@ -422,7 +422,7 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.06]">
+                <tr className="border-b border-black/[0.06]">
                   <th className="text-left px-4 py-3 text-xs text-slate-500 font-medium">Subject</th>
                   <th className="text-center px-3 py-3 text-xs text-slate-500 font-medium w-24">Credits</th>
                   <th className="text-center px-3 py-3 text-xs text-slate-500 font-medium w-32">Grade</th>
@@ -437,7 +437,7 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
                     <motion.tr
                       key={row.id}
                       initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
-                      className={`border-b border-white/[0.04] ${!row.isValid ? 'bg-amber-500/5' : ''}`}
+                      className={`border-b border-black/[0.04] ${!row.isValid ? 'bg-neutral-700/5' : ''}`}
                     >
                       <td className="px-4 py-2">
                         <input
@@ -451,7 +451,7 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
                           <p className="text-[10px] text-slate-600 mt-0.5 pl-1">{row.subjectCode}</p>
                         )}
                         {row.validationError && (
-                          <p className="text-amber-400 text-[10px] mt-0.5 pl-1">⚠ {row.validationError}</p>
+                          <p className="text-neutral-600 text-[10px] mt-0.5 pl-1">⚠ {row.validationError}</p>
                         )}
                       </td>
                       <td className="px-3 py-2">
@@ -483,13 +483,13 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
                       </td>
                       <td className="px-3 py-2 text-center">
                         <span className={`text-xs font-medium ${
-                          row.confidence >= 80 ? 'text-emerald-400'
-                          : row.confidence >= 50 ? 'text-amber-400'
-                          : 'text-red-400'
+                          row.confidence >= 80 ? 'text-neutral-700'
+                          : row.confidence >= 50 ? 'text-neutral-600'
+                          : 'text-neutral-600'
                         }`}>{row.confidence}%</span>
                       </td>
                       <td className="px-2 py-2 text-center">
-                        <button onClick={() => onDelete(row.id)} className="text-slate-500 hover:text-red-400 transition-colors cursor-pointer text-lg leading-none">×</button>
+                        <button onClick={() => onDelete(row.id)} className="text-slate-500 hover:text-neutral-600 transition-colors cursor-pointer text-lg leading-none">×</button>
                       </td>
                     </motion.tr>
                   ))}
@@ -522,11 +522,11 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
       {/* Actions */}
       <div className="flex gap-3 flex-wrap">
         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onAdd}
-          className="px-4 py-2.5 rounded-xl text-sm font-medium border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer">
+          className="px-4 py-2.5 rounded-xl text-sm font-medium border border-black/30 text-purple-400 hover:bg-black/10 transition-colors cursor-pointer">
           + Add Row
         </motion.button>
         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onReset}
-          className="px-4 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:bg-white/5 transition-colors cursor-pointer">
+          className="px-4 py-2.5 rounded-xl text-sm font-medium border border-black/10 text-slate-400 hover:bg-black/5 transition-colors cursor-pointer">
           ← Rescan
         </motion.button>
         <motion.button
@@ -534,7 +534,7 @@ function ReviewScreen({ rows, accuracy, liveGPA, rawText, registerNumber, semest
           onClick={onCalculate}
           disabled={rows.filter((r) => r.isValid).length === 0}
           className="ml-auto px-6 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: 'linear-gradient(135deg, #a855f7, #3b82f6)', boxShadow: '0 0 20px rgba(168,85,247,0.4)' }}
+          style={{ background: '#0a0a0a', boxShadow: '0 0 20px rgba(0,0,0,0.4)' }}
         >
           Calculate GPA / CGPA →
         </motion.button>

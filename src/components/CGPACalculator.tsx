@@ -68,7 +68,7 @@ export default function CGPACalculator() {
   }));
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full max-w-none px-4 sm:px-8 lg:px-16 py-8 space-y-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -124,7 +124,7 @@ export default function CGPACalculator() {
                   <motion.button
                     whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                     onClick={() => removeSem(s.id)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-neutral-600 hover:bg-neutral-800/10 transition-colors cursor-pointer"
                   >
                     ×
                   </motion.button>
@@ -136,14 +136,14 @@ export default function CGPACalculator() {
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={addSem}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-black/30 text-purple-400 hover:bg-black/10 transition-colors cursor-pointer"
               >
                 + Add Semester
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={reset}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:bg-white/5 transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-sm font-medium border border-black/10 text-slate-400 hover:bg-black/5 transition-colors cursor-pointer"
               >
                 Reset
               </motion.button>
@@ -156,30 +156,30 @@ export default function CGPACalculator() {
               <p className="text-xs text-slate-500 mb-4 font-medium">CGPA Growth Trend</p>
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
                   <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 10]} tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#e2e8f0', fontSize: 12 }}
-                    cursor={{ stroke: 'rgba(255,255,255,0.1)' }}
+                    contentStyle={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 8, color: '#0a0a0a', fontSize: 12 }}
+                    cursor={{ stroke: 'rgba(0,0,0,0.1)' }}
                   />
-                  <ReferenceLine y={8.5} stroke="rgba(168,85,247,0.3)" strokeDasharray="4 4" />
+                  <ReferenceLine y={8.5} stroke="rgba(0,0,0,0.3)" strokeDasharray="4 4" />
                   <Line
                     type="monotone" dataKey="gpa" name="Sem GPA"
-                    stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 4 }}
+                    stroke="#0a0a0a" strokeWidth={2} dot={{ fill: '#0a0a0a', r: 4 }}
                     connectNulls
                     animationDuration={1000}
                   />
                   <Line
                     type="monotone" dataKey="cgpa" name="CGPA"
-                    stroke="#a855f7" strokeWidth={2.5} dot={{ fill: '#a855f7', r: 4 }}
+                    stroke="#0a0a0a" strokeWidth={2.5} dot={{ fill: '#0a0a0a', r: 4 }}
                     animationDuration={1200}
                   />
                 </LineChart>
               </ResponsiveContainer>
               <div className="flex gap-4 mt-2 justify-center">
-                <LegendDot color="#3b82f6" label="Sem GPA" />
-                <LegendDot color="#a855f7" label="CGPA" />
+                <LegendDot color="#0a0a0a" label="Sem GPA" />
+                <LegendDot color="#0a0a0a" label="CGPA" />
               </div>
             </Glass>
           )}
@@ -199,10 +199,10 @@ export default function CGPACalculator() {
           </Glass>
 
           <div className="grid grid-cols-2 gap-3">
-            <StatCard label="Percentage" value={percentage > 0 ? percentage.toFixed(1) + '%' : '–'} color="#06b6d4" />
-            <StatCard label="Total Credits" value={totalCredits > 0 ? String(totalCredits) : '–'} color="#10b981" />
-            <StatCard label="Semesters" value={String(validSems.length)} color="#f59e0b" />
-            <StatCard label="Best GPA" value={validSems.length ? Math.max(...validSems.map((s) => Number(s.gpa))).toFixed(2) : '–'} color="#a855f7" />
+            <StatCard label="Percentage" value={percentage > 0 ? percentage.toFixed(1) + '%' : '–'} color="#0a0a0a" />
+            <StatCard label="Total Credits" value={totalCredits > 0 ? String(totalCredits) : '–'} color="#0a0a0a" />
+            <StatCard label="Semesters" value={String(validSems.length)} color="#0a0a0a" />
+            <StatCard label="Best GPA" value={validSems.length ? Math.max(...validSems.map((s) => Number(s.gpa))).toFixed(2) : '–'} color="#0a0a0a" />
           </div>
 
           <Glass className="p-4">
@@ -217,7 +217,7 @@ export default function CGPACalculator() {
 
 function StatCard({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <Glass className="p-3 text-center hover:border-white/[0.12] transition-colors" hover>
+    <Glass className="p-3 text-center hover:border-black/[0.12] transition-colors" hover>
       <p className="text-xs text-slate-500 mb-1">{label}</p>
       <p className="text-lg font-bold" style={{ color }}>{value}</p>
     </Glass>

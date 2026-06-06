@@ -13,7 +13,7 @@ export default function CircleProgress({
   value,
   size = 160,
   strokeWidth = 10,
-  color = '#a855f7',
+  color = '#0a0a0a',
   label,
   sublabel,
 }: CircleProgressProps) {
@@ -28,7 +28,7 @@ export default function CircleProgress({
         <circle
           cx={size / 2} cy={size / 2} r={r}
           fill="none"
-          stroke="rgba(255,255,255,0.06)"
+          stroke="rgba(0,0,0,0.06)"
           strokeWidth={strokeWidth}
         />
         <motion.circle
@@ -48,7 +48,7 @@ export default function CircleProgress({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {label && (
-          <span className="text-2xl font-bold text-white" style={{ textShadow: `0 0 20px ${color}` }}>
+          <span className="text-2xl font-bold text-black">
             {label}
           </span>
         )}

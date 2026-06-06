@@ -11,7 +11,7 @@ export default function Glass({ children, className = '', hover = false, ...prop
   return (
     <motion.div
       className={`glass rounded-2xl ${className}`}
-      whileHover={hover ? { scale: 1.01, borderColor: 'rgba(168,85,247,0.25)' } : undefined}
+      whileHover={hover ? { scale: 1.01, borderColor: 'rgba(0,0,0,0.25)' } : undefined}
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       {...props}
     >

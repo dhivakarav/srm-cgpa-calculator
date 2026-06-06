@@ -38,7 +38,7 @@ export default function Predictor() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full max-w-none px-4 sm:px-8 lg:px-16 py-8 space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold gradient-text">What-If Predictor</h1>
         <p className="text-slate-400 text-sm">Simulate GPA changes and see your predicted CGPA instantly.</p>
@@ -65,7 +65,7 @@ export default function Predictor() {
                       className="w-20 px-2 py-1.5 text-xs text-center rounded-lg"
                       placeholder="Credits"
                     />
-                    <button onClick={() => removeSem(s.id)} className="text-slate-500 hover:text-red-400 cursor-pointer text-lg leading-none">×</button>
+                    <button onClick={() => removeSem(s.id)} className="text-slate-500 hover:text-neutral-600 cursor-pointer text-lg leading-none">×</button>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] text-slate-500 w-12 text-right">{current.toFixed(1)} →</span>
@@ -73,11 +73,11 @@ export default function Predictor() {
                       type="range" min={0} max={10} step={0.1}
                       value={wi}
                       onChange={(e) => setWhatIfGPAs((p) => ({ ...p, [s.id]: parseFloat(e.target.value) }))}
-                      className="flex-1 accent-purple-500 cursor-pointer"
+                      className="flex-1 accent-black cursor-pointer"
                     />
                     <span className="text-sm font-bold text-purple-400 w-10">{wi.toFixed(1)}</span>
                     {wi !== current && (
-                      <Pill color={wi > current ? '#10b981' : '#ef4444'} className="text-[10px]">
+                      <Pill color={wi > current ? '#0a0a0a' : '#0a0a0a'} className="text-[10px]">
                         {wi > current ? '+' : ''}{(wi - current).toFixed(1)}
                       </Pill>
                     )}
@@ -86,7 +86,7 @@ export default function Predictor() {
               );
             })}
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={addSem}
-              className="w-full py-2 rounded-xl text-xs font-medium border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer">
+              className="w-full py-2 rounded-xl text-xs font-medium border border-black/30 text-purple-400 hover:bg-black/10 transition-colors cursor-pointer">
               + Add Semester
             </motion.button>
           </Glass>
@@ -110,18 +110,18 @@ export default function Predictor() {
                   <div key={t}>
                     <div className="flex justify-between text-xs mb-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-medium">CGPA {t}</span>
-                        {sems === 0 && <Pill color="#10b981" className="text-[10px]">Achieved ✓</Pill>}
+                        <span className="text-black font-medium">CGPA {t}</span>
+                        {sems === 0 && <Pill color="#0a0a0a" className="text-[10px]">Achieved ✓</Pill>}
                         {sems !== null && sems > 0 && (
                           <span className="text-slate-500">({sems} sem{sems !== 1 ? 's' : ''} with 10.0)</span>
                         )}
                       </div>
                       <span className="text-slate-400 font-medium">{prog.toFixed(0)}%</span>
                     </div>
-                    <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-2 rounded-full bg-black/[0.06] overflow-hidden">
                       <motion.div
                         className="h-full rounded-full"
-                        style={{ background: prog >= 100 ? '#10b981' : 'linear-gradient(90deg,#a855f7,#3b82f6)' }}
+                        style={{ background: prog >= 100 ? '#0a0a0a' : 'linear-gradient(90deg,#0a0a0a,#0a0a0a)' }}
                         animate={{ width: `${prog}%` }}
                         transition={{ duration: 0.6 }}
                       />
@@ -137,8 +137,8 @@ export default function Predictor() {
         <div className="space-y-4">
           <Glass className="p-6 text-center space-y-4">
             <p className="text-xs text-slate-500 uppercase tracking-widest font-medium">Current CGPA</p>
-            <p className="text-4xl font-black text-white">{currentCGPA.toFixed(2)}</p>
-            <div className="border-t border-white/[0.06] pt-4">
+            <p className="text-4xl font-black text-black">{currentCGPA.toFixed(2)}</p>
+            <div className="border-t border-black/[0.06] pt-4">
               <p className="text-xs text-slate-500 uppercase tracking-widest font-medium mb-2">Predicted CGPA</p>
               <p className="text-5xl font-black" style={{ color: meta.color, textShadow: `0 0 30px ${meta.color}60` }}>
                 {predictedCGPA.toFixed(2)}
@@ -171,7 +171,7 @@ export default function Predictor() {
                     setWhatIfGPAs(m);
                   }
                 }}
-                className="w-full py-2 rounded-lg text-xs font-medium border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
+                className="w-full py-2 rounded-lg text-xs font-medium border border-black/10 text-slate-400 hover:bg-black/5 hover:text-black transition-colors cursor-pointer"
               >{label}</motion.button>
             ))}
           </Glass>

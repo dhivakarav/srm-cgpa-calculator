@@ -25,8 +25,8 @@ const defaultSubject = (): Subject => ({
 });
 
 const GRADE_COLORS: Record<string, string> = {
-  O: '#a855f7', 'A+': '#3b82f6', A: '#06b6d4',
-  'B+': '#10b981', B: '#84cc16', C: '#f59e0b', U: '#ef4444',
+  O: '#0a0a0a', 'A+': '#0a0a0a', A: '#0a0a0a',
+  'B+': '#0a0a0a', B: '#0a0a0a', C: '#0a0a0a', U: '#0a0a0a',
 };
 
 export default function GPACalculator() {
@@ -69,7 +69,7 @@ export default function GPACalculator() {
   const totalCredits = subjects.reduce((sum, s) => sum + (s.credits === '' ? 0 : Number(s.credits)), 0);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full max-w-none px-4 sm:px-8 lg:px-16 py-8 space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -136,7 +136,7 @@ export default function GPACalculator() {
                   <motion.button
                     whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                     onClick={() => removeSubject(s.id)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-neutral-600 hover:bg-neutral-800/10 transition-colors cursor-pointer"
                   >
                     ×
                   </motion.button>
@@ -148,14 +148,14 @@ export default function GPACalculator() {
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={addSubject}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-black/30 text-purple-400 hover:bg-black/10 transition-colors cursor-pointer"
               >
                 + Add Subject
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={reset}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:bg-white/5 transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-sm font-medium border border-black/10 text-slate-400 hover:bg-black/5 transition-colors cursor-pointer"
               >
                 Reset
               </motion.button>
@@ -183,12 +183,12 @@ export default function GPACalculator() {
                   <XAxis dataKey="grade" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis hide allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#e2e8f0' }}
-                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                    contentStyle={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 8, color: '#0a0a0a' }}
+                    cursor={{ fill: 'rgba(0,0,0,0.03)' }}
                   />
                   <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                     {chartData.map((entry) => (
-                      <Cell key={entry.grade} fill={GRADE_COLORS[entry.grade] ?? '#a855f7'} />
+                      <Cell key={entry.grade} fill={GRADE_COLORS[entry.grade] ?? '#0a0a0a'} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -219,7 +219,7 @@ export default function GPACalculator() {
           <Glass className="p-4 space-y-3">
             <StatRow label="GPA" value={<CountUp value={gpa} />} color={meta.color} />
             <StatRow label="Percentage" value={<CountUp value={Math.max(0, gpa * 10 - 7.5)} />} color={meta.color} suffix="%" />
-            <StatRow label="Total Credits" value={<span>{totalCredits}</span>} color="#06b6d4" />
+            <StatRow label="Total Credits" value={<span>{totalCredits}</span>} color="#0a0a0a" />
           </Glass>
 
           {/* Study tip */}

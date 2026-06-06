@@ -6,7 +6,7 @@ interface PillProps {
   className?: string;
 }
 
-export default function Pill({ children, color = '#a855f7', className = '' }: PillProps) {
+export default function Pill({ children, color = '#0a0a0a', className = '' }: PillProps) {
   return (
     <span
       className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${className}`}

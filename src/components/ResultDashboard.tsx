@@ -21,8 +21,8 @@ interface Props {
 }
 
 const GRADE_COLORS: Record<string, string> = {
-  O: '#a855f7', 'A+': '#3b82f6', A: '#06b6d4',
-  'B+': '#10b981', B: '#84cc16', C: '#f59e0b', U: '#ef4444',
+  O: '#0a0a0a', 'A+': '#0a0a0a', A: '#0a0a0a',
+  'B+': '#0a0a0a', B: '#0a0a0a', C: '#0a0a0a', U: '#0a0a0a',
 };
 
 function useConfetti(trigger: boolean) {
@@ -41,7 +41,7 @@ function useConfetti(trigger: boolean) {
       y: -10,
       vx: (Math.random() - 0.5) * 4,
       vy: Math.random() * 4 + 2,
-      color: ['#a855f7', '#3b82f6', '#06b6d4', '#f59e0b', '#10b981', '#ec4899'][Math.floor(Math.random() * 6)],
+      color: ['#0a0a0a', '#0a0a0a', '#0a0a0a', '#0a0a0a', '#0a0a0a', '#0a0a0a'][Math.floor(Math.random() * 6)],
       size: Math.random() * 6 + 4,
       rotation: Math.random() * 360,
       rotSpeed: (Math.random() - 0.5) * 8,
@@ -128,11 +128,11 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-md"
             >
-              <Glass className="p-8 text-center space-y-5 border-purple-500/30">
+              <Glass className="p-8 text-center space-y-5 border-black/30">
                 {/* Glow */}
                 <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ background: `radial-gradient(ellipse at 50% 0%, ${meta.color}20, transparent 60%)` }} />
                 <p className="text-4xl">🎉</p>
-                <h2 className="text-2xl font-black text-white">Congratulations!</h2>
+                <h2 className="text-2xl font-black text-black">Congratulations!</h2>
                 <Pill color={meta.color} className="text-sm">{meta.emoji} {meta.label}</Pill>
 
                 <div className="grid grid-cols-3 gap-4 my-2">
@@ -145,14 +145,14 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
                   {cgpa > 0 && (
                     <div>
                       <p className="text-xs text-slate-500 mb-1">CGPA</p>
-                      <p className="text-2xl font-black" style={{ color: '#3b82f6' }}>
+                      <p className="text-2xl font-black" style={{ color: '#0a0a0a' }}>
                         <CountUp value={cgpa} />
                       </p>
                     </div>
                   )}
                   <div>
                     <p className="text-xs text-slate-500 mb-1">%</p>
-                    <p className="text-2xl font-black" style={{ color: '#06b6d4' }}>
+                    <p className="text-2xl font-black" style={{ color: '#0a0a0a' }}>
                       <CountUp value={Math.max(0, percentage)} />
                     </p>
                   </div>
@@ -162,7 +162,7 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
                   whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                   onClick={() => setShowModal(false)}
                   className="w-full py-3 rounded-xl font-bold text-white text-sm cursor-pointer"
-                  style={{ background: `linear-gradient(135deg, ${meta.color}, #3b82f6)` }}
+                  style={{ background: `linear-gradient(135deg, ${meta.color}, #0a0a0a)` }}
                 >
                   View Full Dashboard →
                 </motion.button>
@@ -178,8 +178,8 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Semester GPA', value: gpa.toFixed(2), color: meta.color, icon: '📊' },
-            { label: 'CGPA', value: (cgpa > 0 ? cgpa : gpa).toFixed(2), color: '#3b82f6', icon: '🎓' },
-            { label: 'Percentage', value: `${Math.max(0, percentage).toFixed(1)}%`, color: '#06b6d4', icon: '📈' },
+            { label: 'CGPA', value: (cgpa > 0 ? cgpa : gpa).toFixed(2), color: '#0a0a0a', icon: '🎓' },
+            { label: 'Percentage', value: `${Math.max(0, percentage).toFixed(1)}%`, color: '#0a0a0a', icon: '📈' },
             { label: 'Performance', value: meta.label, color: meta.color, icon: meta.emoji },
           ].map((card) => (
             <Glass key={card.label} className="p-4 text-center" hover>
@@ -200,10 +200,10 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
                   <PieChart>
                     <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={72} dataKey="value" paddingAngle={2} animationBegin={0} animationDuration={1000}>
                       {pieData.map((entry) => (
-                        <Cell key={entry.name} fill={GRADE_COLORS[entry.name] ?? '#a855f7'} />
+                        <Cell key={entry.name} fill={GRADE_COLORS[entry.name] ?? '#0a0a0a'} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12, color: '#e2e8f0' }} />
+                    <Tooltip contentStyle={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 8, fontSize: 12, color: '#0a0a0a' }} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex-1 space-y-1.5">
@@ -227,11 +227,11 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
               <p className="text-xs text-slate-500 font-medium mb-4">Semester GPA Trend</p>
               <ResponsiveContainer width="100%" height={160}>
                 <LineChart data={semChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
                   <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 10]} tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#e2e8f0', fontSize: 12 }} />
-                  <Line type="monotone" dataKey="gpa" stroke="#a855f7" strokeWidth={2.5} dot={{ fill: '#a855f7', r: 4 }} animationDuration={1000} />
+                  <Tooltip contentStyle={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 8, color: '#0a0a0a', fontSize: 12 }} />
+                  <Line type="monotone" dataKey="gpa" stroke="#0a0a0a" strokeWidth={2.5} dot={{ fill: '#0a0a0a', r: 4 }} animationDuration={1000} />
                 </LineChart>
               </ResponsiveContainer>
             </Glass>
@@ -258,19 +258,19 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
                         type="range" min={0} max={10} step={0.1}
                         value={whatIf}
                         onChange={(e) => setWhatIfGPAs((prev) => ({ ...prev, [i]: parseFloat(e.target.value) }))}
-                        className="w-full accent-purple-500 cursor-pointer"
+                        className="w-full accent-black cursor-pointer"
                       />
                     </div>
                   );
                 })}
               </div>
-              <div className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl bg-black/[0.03] border border-black/[0.06]">
                 <p className="text-xs text-slate-500">Predicted CGPA</p>
-                <p className="text-4xl font-black" style={{ color: '#a855f7', textShadow: '0 0 30px rgba(168,85,247,0.5)' }}>
+                <p className="text-4xl font-black" style={{ color: '#0a0a0a', textShadow: '0 0 30px rgba(0,0,0,0.5)' }}>
                   {whatIfCGPA.toFixed(2)}
                 </p>
                 {whatIfCGPA !== cgpa && (
-                  <Pill color={whatIfCGPA > cgpa ? '#10b981' : '#ef4444'}>
+                  <Pill color={whatIfCGPA > cgpa ? '#0a0a0a' : '#0a0a0a'}>
                     {whatIfCGPA > cgpa ? '+' : ''}{(whatIfCGPA - cgpa).toFixed(2)} vs current
                   </Pill>
                 )}
@@ -283,10 +283,10 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
                           <span className="text-slate-500">Target {t}</span>
                           <span className="text-slate-400">{prog.toFixed(0)}%</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className="h-1.5 rounded-full bg-black/[0.06] overflow-hidden">
                           <motion.div
                             className="h-full rounded-full"
-                            style={{ background: prog >= 100 ? '#10b981' : 'linear-gradient(90deg,#a855f7,#3b82f6)' }}
+                            style={{ background: prog >= 100 ? '#0a0a0a' : 'linear-gradient(90deg,#0a0a0a,#0a0a0a)' }}
                             animate={{ width: `${prog}%` }}
                             transition={{ duration: 0.5 }}
                           />
@@ -304,20 +304,20 @@ export default function ResultDashboard({ subjects, semesters, onBack, onReset }
         <div className="flex gap-3 flex-wrap">
           {onBack && (
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onBack}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:bg-white/5 transition-colors cursor-pointer">
+              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-black/10 text-slate-400 hover:bg-black/5 transition-colors cursor-pointer">
               ← Edit Data
             </motion.button>
           )}
           {onReset && (
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onReset}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:bg-white/5 transition-colors cursor-pointer">
+              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-black/10 text-slate-400 hover:bg-black/5 transition-colors cursor-pointer">
               Start Over
             </motion.button>
           )}
           <motion.button
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={() => setShowModal(true)}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer">
+            className="px-4 py-2.5 rounded-xl text-sm font-medium border border-black/30 text-purple-400 hover:bg-black/10 transition-colors cursor-pointer">
             🎉 Show Result Card
           </motion.button>
         </div>

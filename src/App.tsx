@@ -24,10 +24,10 @@ export default function App() {
 
       {/* Background gradients */}
       <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-[0.07]"
-          style={{ background: 'radial-gradient(circle, #a855f7, transparent)' }} />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full opacity-[0.05]"
-          style={{ background: 'radial-gradient(circle, #3b82f6, transparent)' }} />
+        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-[0.025]"
+          style={{ background: 'radial-gradient(circle, #0a0a0a, transparent)' }} />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full opacity-[0.02]"
+          style={{ background: 'radial-gradient(circle, #0a0a0a, transparent)' }} />
       </div>
 
       <div className="relative" style={{ zIndex: 1 }}>
@@ -58,7 +58,7 @@ export default function App() {
           </AnimatePresence>
         </main>
 
-        <footer className="border-t border-white/[0.06] py-6 text-center">
+        <footer className="border-t border-black/[0.06] py-6 text-center">
           <p className="text-xs text-slate-600">
             SRM GPA & CGPA Calculator · 100% offline, no data leaves your browser
           </p>
