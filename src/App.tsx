@@ -3,9 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import ParticleBackground from './components/ParticleBackground';
 import Navbar, { type Tab } from './components/Navbar';
 import GPACalculator from './components/GPACalculator';
-import CGPACalculator from './components/CGPACalculator';
 import AIScanner from './components/AIScanner';
-import Predictor from './components/Predictor';
 import WelcomeModal from './components/WelcomeModal';
 
 export default function App() {
@@ -40,21 +38,13 @@ export default function App() {
                 <GPACalculator />
               </motion.div>
             )}
-            {tab === 'cgpa' && (
-              <motion.div key="cgpa" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }}>
-                <CGPACalculator />
-              </motion.div>
-            )}
+
             {tab === 'scanner' && (
               <motion.div key="scanner" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }}>
                 <AIScanner />
               </motion.div>
             )}
-            {tab === 'predictor' && (
-              <motion.div key="predictor" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }}>
-                <Predictor />
-              </motion.div>
-            )}
+
           </AnimatePresence>
         </main>
 
