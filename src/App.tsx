@@ -50,11 +50,7 @@ export default function App() {
                 <AIScanner />
               </motion.div>
             )}
-            {tab === 'predictor' && (
-              <motion.div key="predictor" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }}>
-                <Predictor />
-              </motion.div>
-            )}
+            
           </AnimatePresence>
         </main>
 
