@@ -40,11 +40,6 @@ export default function App() {
                 <GPACalculator />
               </motion.div>
             )}
-            {tab === 'cgpa' && (
-              <motion.div key="cgpa" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }}>
-                <CGPACalculator />
-              </motion.div>
-            )}
             {tab === 'scanner' && (
               <motion.div key="scanner" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }}>
                 <AIScanner />
